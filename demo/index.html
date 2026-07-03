@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExamRizz · 진단 엔진 데모</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1f2545; --navy-soft:#2c3464;
+    --cream:#f6f4ef; --cream-alt:#fbf9f4; --white:#fff;
+    --ink:#22263f; --ink-soft:#404566; --muted:#71748f; --line:#e7e5dd; --line-2:#e9eaf2;
+    --brand:#4b48bf; --brand-2:#6d6ae0; --brand-soft:#eeeefc;
+    --good:#0e9f6e; --good-soft:#e6f6ef; --grow:#c58a1d; --grow-soft:#faf1df; --wrong:#d6504a; --wrong-soft:#fbeae8;
+    --burgundy:#7a2e2e; --mint:#eef4f1;
+    --serif:'Noto Serif KR','Nanum Myeongjo',Georgia,'Apple SD Gothic Neo',serif;
+    --sans:'Noto Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    --mono:'IBM Plex Mono','SF Mono',Menlo,monospace;
+    --r:16px; --shadow:0 1px 2px rgba(31,37,69,.04), 0 14px 38px rgba(31,37,69,.08);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);color:var(--ink);background:var(--cream);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-weight:700;word-break:keep-all} p{word-break:keep-all} button{font-family:var(--sans);cursor:pointer}
+  .kr,.serif{word-break:keep-all;overflow-wrap:break-word}
+
+  /* deck shell */
+  .deck{height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+  .screens{position:relative;flex:1 1 auto;overflow:hidden}
+  .screen{position:absolute;inset:0;overflow-y:auto;opacity:0;visibility:hidden;transform:translateX(16px);transition:opacity .4s ease,transform .4s ease;padding:34px 24px 30px}
+  .screen.active{opacity:1;visibility:visible;transform:none;z-index:2}
+  .screen.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+  .holder{width:100%;max-width:760px;margin:0 auto}
+
+  /* topbar */
+  .topbar{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:12px 22px;background:var(--navy);color:#fff}
+  .chs{display:flex;align-items:center;gap:7px;min-width:0;flex-wrap:wrap}
+  .ch{display:flex;align-items:center;gap:7px;background:none;border:0;color:rgba(255,255,255,.5);font-family:inherit;font-weight:700;font-size:12.5px;white-space:nowrap;transition:color .2s}
+  .ch .n{font-family:var(--mono);font-size:11px;width:19px;height:19px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);transition:.2s}
+  .ch.on{color:#fff} .ch.on .n{background:var(--brand-2);color:#fff}
+  .ch.done .n{background:rgba(155,227,200,.22);color:#9be3c8}
+  .ch-sep{color:rgba(255,255,255,.28);font-size:12px}
+  .ptrack{flex:1 1 auto;height:4px;border-radius:2px;background:rgba(255,255,255,.14);overflow:hidden;min-width:50px}
+  .ptrack i{display:block;height:100%;background:#9be3c8;border-radius:2px;width:0;transition:width .4s ease}
+
+  /* bottom nav */
+  .nav{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:13px 22px;background:var(--cream-alt);border-top:1px solid var(--line)}
+  .nav .hint{margin:0 auto;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .nav .key{font-family:var(--mono);font-size:11px;border:1px solid var(--line);border-radius:5px;padding:1px 6px;background:#fff;color:var(--muted)}
+  .btn{display:inline-flex;align-items:center;gap:8px;border:none;border-radius:10px;font-weight:700;font-size:14px;padding:12px 20px;transition:transform .08s,filter .15s,background .15s}
+  .btn:active{transform:translateY(1px)} .btn:focus-visible{outline:3px solid #c3c2f3;outline-offset:2px}
+  .btn-primary{background:var(--navy);color:#fff} .btn-primary:hover{filter:brightness(1.18)}
+  .btn-ghost{background:transparent;color:var(--navy);border:1px solid var(--line)} .btn-ghost:hover{background:#fff}
+  .btn.big{font-size:16px;padding:14px 28px;border-radius:12px}
+  .btn-accent{background:var(--brand);color:#fff} .btn-accent:hover{filter:brightness(1.08)}
+  .btn.sm{padding:9px 14px;font-size:13px}
+  .btn.soft{background:var(--brand-soft);color:var(--brand)}
+
+  /* cover */
+  .cover-mark{font-weight:700;font-size:14px;color:var(--navy);display:flex;align-items:center;gap:9px;margin-bottom:30px;justify-content:center}
+  .cover-mark .dot{width:10px;height:10px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px var(--brand-soft)}
+  .cover h1{font-family:var(--serif);font-size:40px;line-height:1.34;font-weight:600;letter-spacing:-.01em;max-width:720px}
+  .cover .csub{margin-top:22px;font-size:16.5px;color:var(--ink-soft);line-height:1.8;max-width:560px}
+  .cover .cmeta{margin-top:28px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+
+  /* chapter card */
+  .card-num{font-family:var(--serif);font-size:70px;font-weight:700;line-height:.85;color:var(--burgundy);opacity:.92}
+  .card-act{margin-top:8px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .cardc h2{font-family:var(--serif);font-size:34px;font-weight:600;line-height:1.35;margin-top:18px;max-width:640px}
+  .cardc .cline{margin-top:16px;font-size:16px;color:var(--ink-soft);line-height:1.8;max-width:520px}
+  .chip-tip{margin-top:24px;font-size:12.5px;color:var(--muted);display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.7);border:1px solid var(--line);padding:7px 13px;border-radius:999px}
+
+  /* section header */
+  .sec-head{margin-bottom:20px}
+  .sec-eyebrow{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--burgundy);letter-spacing:.05em;margin-bottom:9px}
+  .sec-title{font-family:var(--serif);font-size:23px;font-weight:600;line-height:1.4}
+  .sec-desc{margin-top:9px;color:var(--ink-soft);max-width:620px;font-size:14.5px;line-height:1.7}
+
+  h2.block{font-size:20px;font-weight:800;letter-spacing:-.02em}
+
+  /* report prose */
+  .area{padding:13px 0;border-top:1px solid var(--line)} .area:first-of-type{border-top:0}
+  .area .lab{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+  .area .lab .nm{font-size:13px;font-weight:800}
+  .area .lab .tag{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:999px}
+  .tag.good{background:var(--good-soft);color:var(--good)} .tag.grow{background:var(--grow-soft);color:var(--grow)} .tag.note{background:var(--brand-soft);color:var(--brand)}
+  .area p{font-size:15.5px;color:var(--ink-soft);line-height:1.62}
+  .handoff{font-size:15.5px;color:var(--ink);font-weight:600;margin-top:16px;padding:13px 16px;background:var(--brand-soft);border-radius:11px}
+
+  /* question / diagnostic shared */
+  .q{border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin:14px 0;background:var(--white)}
+  .q .qt{font-size:12px;font-weight:800;color:var(--brand-2);letter-spacing:.02em;margin-bottom:6px}
+  .q .stem{font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:10px}
+  .passage{font-family:var(--serif);background:var(--cream-alt);border:1px solid var(--line);border-radius:12px;padding:16px 18px;font-size:15px;color:#2c3052;line-height:1.78;margin-bottom:12px}
+  .passage .blank{display:inline-block;min-width:120px;border-bottom:2px solid var(--brand-2);color:var(--brand-2);font-weight:700;text-align:center;font-family:var(--sans)}
+  .gloss{font-size:12px;color:var(--muted);margin-top:8px;font-family:var(--sans)}
+  .opt{display:flex;gap:10px;font-size:14.5px;color:var(--ink-soft);padding:11px 14px;border:1px solid var(--line);border-radius:10px;margin:6px 0;background:#fff;line-height:1.5}
+  .opt .n{font-weight:800;color:var(--muted);min-width:18px}
+  .opt.bad{border-color:var(--wrong);background:var(--wrong-soft)} .opt.bad .n{color:var(--wrong)}
+  .opt.good{border-color:var(--good);background:var(--good-soft)} .opt.good .n{color:var(--good)}
+  .opt .rtag{margin-left:auto;font-weight:800;font-size:12px;white-space:nowrap} .opt.bad .rtag{color:var(--wrong)} .opt.good .rtag{color:var(--good)}
+  .dtiles{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0}
+  .dtile{border:1px solid var(--line);border-radius:9px;padding:7px 13px;font-size:14px;background:#fff;color:var(--ink-soft)}
+  .dtile.sel{border-color:var(--brand);background:var(--brand-soft);color:var(--brand);font-weight:700}
+  .dnote{font-size:13px;color:var(--muted);margin-top:11px;line-height:1.55}
+  .hintlab{font-size:11px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;color:var(--brand-2);margin-top:10px}
+  .wrote{font-family:var(--mono);font-size:13.5px;background:var(--cream-alt);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin:9px 0;color:var(--ink)}
+  .wrote .l{font-family:var(--sans);font-size:11px;color:var(--muted);font-weight:700;display:block;margin-bottom:5px}
+  .coach{background:var(--brand-soft);border-radius:12px;padding:16px 18px;margin-top:12px}
+  .coach .ch2{font-weight:800;font-size:13px;color:var(--brand);margin-bottom:7px}
+  .coach p{font-size:14.5px;color:var(--ink-soft);line-height:1.62} .coach b{color:var(--ink)}
+
+  /* exam set */
+  .sizes{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
+  .sizes button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:14px 0;flex:1;min-width:62px;font:inherit;font-weight:800;font-size:16px;color:var(--ink);cursor:pointer}
+  .sizes button:hover{border-color:var(--brand-2)} .sizes button.pick{border-color:var(--brand);background:var(--brand-soft);color:var(--brand)}
+  .sizes button .c{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-top:2px}
+  .scorewrap{text-align:center;padding:8px 0}
+  .dots{display:flex;gap:8px;justify-content:center;margin:14px 0}
+  .dots .d{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:15px}
+  .dots .d.ok{background:var(--good)} .dots .d.no{background:var(--wrong)}
+  .bigscore{font-size:38px;font-weight:800;letter-spacing:-.03em;font-family:var(--mono)} .bigscore .sub{font-size:16px;color:var(--muted);font-weight:700;font-family:var(--sans)}
+
+  /* materials */
+  .efut-banner{display:none;background:var(--good-soft);border:1px solid #bfe6d5;color:#0c6e4e;border-radius:11px;padding:10px 15px;font-size:13px;font-weight:700;margin-bottom:14px}
+  body[data-partner="efuture"] .efut-banner{display:block}
+  .mat{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin:9px 0;background:#fff}
+  .mat .ic{width:34px;height:34px;border-radius:9px;background:var(--brand-soft);color:var(--brand);display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0}
+  .mat .mb{flex:1;min-width:0} .mat .mk{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--brand-2)} .mat .mt{font-weight:700;font-size:14px;color:var(--ink)}
+  .mat .mc{display:flex;gap:7px}
+  .correctlist{border:1px dashed var(--line);border-radius:12px;padding:14px 16px;margin:14px 0;background:var(--cream-alt);font-size:13.5px;color:var(--muted)}
+  .correctlist b{color:var(--ink)} .correctlist .rowc{display:flex;gap:8px;align-items:center;margin:5px 0} .correctlist .ok{color:var(--good);font-weight:800}
+  .closing{background:var(--navy);color:#fff;border-radius:14px;padding:20px 22px;margin-top:6px;max-width:520px}
+  .closing h3{font-family:var(--serif);font-size:22px;font-weight:600;line-height:1.4} .closing p{font-size:14px;color:#c9cbe2;margin-top:8px}
+
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+  @media(max-width:560px){.cover h1{font-size:30px}.cardc h2{font-size:26px}.ch .t{display:none}.screen{padding:24px 16px}}
+</style>
+</head>
+<body data-partner="efuture">
+<div class="deck">
+  <!-- TOP -->
+  <header class="topbar" id="topbar">
+    <div class="chs">
+      <button class="ch" data-go="1"><span class="n">1</span><span class="t">진단</span></button><span class="ch-sep">›</span>
+      <button class="ch" data-go="4"><span class="n">2</span><span class="t">결과</span></button><span class="ch-sep">›</span>
+      <button class="ch" data-go="6"><span class="n">3</span><span class="t">실전</span></button><span class="ch-sep">›</span>
+      <button class="ch" data-go="8"><span class="n">4</span><span class="t">리뷰</span></button><span class="ch-sep">›</span>
+      <button class="ch" data-go="11"><span class="n">5</span><span class="t">계획</span></button>
+    </div>
+    <div class="ptrack"><i id="pfill"></i></div>
+  </header>
+
+  <main class="screens" id="screens">
+
+    <!-- 0 COVER -->
+    <section class="screen center" id="sc-cover">
+      <div class="cover">
+        <div class="cover-mark"><span class="dot"></span>ExamRizz · 진단 엔진 데모</div>
+        <h1>진단부터 리포트까지, 학생이 <b>왜</b> 틀리는지를 짚어냅니다.</h1>
+        <p class="csub">진단 문항을 풀면 프로필이 만들어지고, 실전 문항으로 확인한 뒤, 틀린 이유를 설명하고, 맞춤 학습으로 이어집니다 — 전부 하나의 흐름으로.</p>
+        <p class="cmeta">Stream Learning · 제안용 데모 · 학생 Max</p>
+      </div>
+    </section>
+
+    <!-- 1 CARD ① -->
+    <section class="screen center" id="sc-ch1">
+      <div class="cardc">
+        <div class="card-num">①</div>
+        <div class="card-act">PART 1 · 진단</div>
+        <h2>학생이 진단 문항을 푼다</h2>
+        <p class="cline">어휘·독해·쓰기 등 여러 영역의 문항을 풉니다. 이 답들이 모여 학생의 프로필이 됩니다. Max는 이미 응답을 마쳤고, 함께 살펴봅니다.</p>
+        <div class="chip-tip">아래 “다음 →” 또는 → 키로 진행</div>
+      </div>
+    </section>
+
+    <!-- 2 DIAGNOSTIC A -->
+    <section class="screen" id="sc-diagA">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 1 · 진단 — 어휘</div>
+          <h2 class="sec-title">Max가 푼 진단 문항 (1/2)</h2>
+          <p class="sec-desc">먼저 어휘 영역입니다. 단어를 아는지, 정확히 아는지, 유의어·반의어, 어족까지 나눠 봅니다.</p>
+        </div>
+
+        <div class="q">
+          <div class="qt">어휘 · 아는 단어</div>
+          <div class="stem">아는 단어를 모두 고르세요.</div>
+          <div class="dtiles">
+            <span class="dtile sel">travel</span><span class="dtile sel">decision</span><span class="dtile sel">consensus</span>
+            <span class="dtile sel">merit</span><span class="dtile sel">sentiment</span><span class="dtile sel">ubiquitous</span>
+            <span class="dtile">ephemeral</span><span class="dtile">perfunctory</span>
+          </div>
+          <div class="stem" style="margin-top:16px">이제 <b>merit</b>의 뜻을 고르세요:</div>
+          <div class="opt good"><span class="n">①</span><span>worth or value</span><span class="rtag">✓ 정답</span></div>
+          <div class="opt bad"><span class="n">②</span><span>a reward you receive</span><span class="rtag">✕ 내 답</span></div>
+          <div class="opt"><span class="n">③</span><span>praise from others</span></div>
+          <div class="opt"><span class="n">④</span><span>hard effort</span></div>
+          <p class="dnote">Max recognised most of the words, but on the meaning he picked a close-but-not-exact answer.</p>
+        </div>
+
+        <div class="q">
+          <div class="qt">어휘 · 유의어와 반의어</div>
+          <div class="stem"><b>tacit</b>의 유의어를 고르세요:</div>
+          <div class="opt good"><span class="n">①</span><span>unspoken, understood without being said</span><span class="rtag">✓ 정답</span></div>
+          <div class="opt bad"><span class="n">②</span><span>quiet, making little sound</span><span class="rtag">✕ 내 답</span></div>
+          <div class="opt"><span class="n">③</span><span>agreed by everyone</span></div>
+          <div class="stem" style="margin-top:14px"><b>reinforce</b>의 반의어를 고르세요:</div>
+          <div class="opt good"><span class="n">①</span><span>weaken</span><span class="rtag">✓ 정답 · 내 답</span></div>
+          <div class="opt"><span class="n">②</span><span>support</span></div>
+          <div class="opt"><span class="n">③</span><span>repeat</span></div>
+          <p class="dnote">The antonym was fine; the synonym was a near-miss — he went with the everyday meaning, not the exact one.</p>
+        </div>
+
+        <div class="q">
+          <div class="qt">어휘 · 어족</div>
+          <div class="stem">같은 어근의 단어들: <b>inspect, spectator, spectacle</b>. <b>circumspect</b>의 뜻으로 가장 알맞은 것은?</div>
+          <div class="opt good"><span class="n">①</span><span>careful and cautious (looking around before acting)</span><span class="rtag">✓ 정답</span></div>
+          <div class="opt"><span class="n">②</span><span>moving in a circle</span></div>
+          <div class="opt bad"><span class="n">③</span><span>easily seen by everyone</span><span class="rtag">✕ 내 답</span></div>
+          <div class="opt"><span class="n">④</span><span>showing disrespect</span></div>
+          <p class="dnote">Max spotted the root (<i>spect</i> = look/see) but couldn't carry it to the exact meaning.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 DIAGNOSTIC B -->
+    <section class="screen" id="sc-diagB">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 1 · 진단 — 독해 · 쓰기</div>
+          <h2 class="sec-title">Max가 푼 진단 문항 (2/2)</h2>
+          <p class="sec-desc">이어서 독해의 추론과, 힌트가 있을 때와 없을 때의 쓰기를 봅니다. 여기서 보이는 습관이 뒤의 실전 문항에서 그대로 나타납니다.</p>
+        </div>
+
+        <div class="q">
+          <div class="qt">독해 · 같은 의미 고르기</div>
+          <div class="stem">같은 뜻을 가진 두 문장은?</div>
+          <div class="opt good"><span class="n">A</span><span>Because things were scarce, people focused only on what was urgent.</span><span class="rtag">✓ 정답 · 내 답</span></div>
+          <div class="opt good"><span class="n">B</span><span>The shortage made people ignore long-term needs and fix on the immediate.</span><span class="rtag">✓ 정답 (놓침)</span></div>
+          <div class="opt"><span class="n">C</span><span>People had plenty, so they planned ahead.</span></div>
+          <div class="opt bad"><span class="n">D</span><span>Scarcity made people value rare things more.</span><span class="rtag">✕ 내 답 (B 대신)</span></div>
+          <p class="dnote">The right pair is A and B. Max paired A with D because D shares the word <i>scarcity / rare</i> — he matched the word, not the meaning. This is the same habit that shows up in the exam.</p>
+        </div>
+
+        <div class="q">
+          <div class="qt">쓰기 · 힌트 있을 때 / 없을 때</div>
+          <div class="hintlab">힌트 있음</div>
+          <div class="stem" style="font-weight:600;margin-top:4px">"그 결정은 모두를 놀라게 했다." &nbsp;<span class="muted" style="font-weight:400">— 주어진 단어: decision · surprised · everyone</span></div>
+          <div class="wrote"><span class="l">Max wrote:</span>The decision surprised everyone.</div>
+          <div class="hintlab" style="margin-top:14px">힌트 없음</div>
+          <div class="stem" style="font-weight:600;margin-top:4px">"내가 어제 만난 사람은 의사였다."</div>
+          <div class="wrote"><span class="l">Max wrote:</span>Person I meet yesterday was doctor.</div>
+          <p class="dnote">With the words given, Max is accurate. Without hints, the small slips appear — a missing <b>the / a</b>, and <b>meet</b> should be <b>met</b>. This is the writing-to-a-constraint gap.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 CARD ② -->
+    <section class="screen center" id="sc-ch2">
+      <div class="cardc">
+        <div class="card-num">②</div>
+        <div class="card-act">PART 2 · 결과</div>
+        <h2>답이 프로필이 된다</h2>
+        <p class="cline">진단 결과를 학생이 이해할 수 있는 말로 정리합니다. 등급이나 점수가 아니라, 어디가 강하고 어디를 키울지 — 학생에게 직접.</p>
+      </div>
+    </section>
+
+    <!-- 5 RESULTS (Report #1, verbatim) -->
+    <section class="screen" id="sc-results">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 2 · 결과</div>
+          <h2 class="sec-title">Max의 진단 리포트</h2>
+          <p class="sec-desc">학생이 보는 화면입니다. 진단 엔진의 용어(밴드·점수 등)는 전혀 노출되지 않습니다.</p>
+        </div>
+        <div>
+          <div class="area"><div class="lab"><span class="nm">Vocabulary</span><span class="tag grow">Work on this</span></div>
+            <p>You recognise a lot of vocabulary which is great! The problem is your accuracy which is only 70% for definitions and less than 50% for synonyms. The problem is if you get a passage with 30 unknown words then you will struggle to deal with that passage. It will be helpful for you to work on your overall vocab context skills.</p></div>
+          <div class="area"><div class="lab"><span class="nm">Reading comprehension</span><span class="tag good">Strong</span></div>
+            <p>Overall, your reading comprehension is good. You are quick to find main conclusions which is the most important skill for your 내신 and 수능 papers. You could work on your inference skills which will help you do better at 함의추론 and 순서 questions.</p></div>
+          <div class="area"><div class="lab"><span class="nm">Writing</span><span class="tag grow">Work on this</span></div>
+            <p>Your writing is fine but you make mistakes with writing to a word constraint. This can be improved again, with vocabulary and grammar drills, but also focus on writing free-form without hints.</p></div>
+          <div class="area"><div class="lab"><span class="nm">Grammar</span><span class="tag good">Mostly solid</span></div>
+            <p>Your grammar is good for spotting mistakes, but it is weaker when you have to produce a structure yourself, like changing a tense or rewriting a sentence. This is the same pattern as your writing, and the same drills will help both.</p></div>
+          <div class="area"><div class="lab"><span class="nm">A habit to watch</span><span class="tag note">Exam technique</span></div>
+            <p>On the harder questions, you tend to pick the answer that repeats words from the passage. We will look at exactly where this happened in a moment.</p></div>
+        </div>
+        <p class="handoff">Now let's try out exam questions to see how these skills translate into exam!</p>
+      </div>
+    </section>
+
+    <!-- 6 CARD ③ -->
+    <section class="screen center" id="sc-ch3">
+      <div class="cardc">
+        <div class="card-num">③</div>
+        <div class="card-act">PART 3 · 실전 문항</div>
+        <h2>실전 문항으로 확인한다</h2>
+        <p class="cline">프로필이 실제 시험 문항에서 어떻게 나타나는지 봅니다. 세트 길이는 학생이 직접 고릅니다.</p>
+      </div>
+    </section>
+
+    <!-- 7 EXAM -->
+    <section class="screen" id="sc-exam">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 3 · 실전 문항</div>
+          <h2 class="sec-title">문항 세트 선택</h2>
+          <p class="sec-desc">Choose between a set of 3, 5, 10, 15, 28, or custom.</p>
+        </div>
+        <div class="sizes" id="sizes">
+          <button onclick="pickSize(this)">3</button>
+          <button onclick="pickSize(this)">5</button>
+          <button onclick="pickSize(this)">10</button>
+          <button onclick="pickSize(this)">15</button>
+          <button onclick="pickSize(this)">28<span class="c">full</span></button>
+          <button onclick="pickSize(this)">Custom</button>
+        </div>
+        <div id="examResult" style="display:none;margin-top:24px">
+          <div class="scorewrap">
+            <div class="dots"><span class="d ok">✓</span><span class="d no">✕</span><span class="d ok">✓</span><span class="d ok">✓</span><span class="d no">✕</span></div>
+            <div class="bigscore">3 / 5 <span class="sub">correct</span></div>
+          </div>
+          <p style="text-align:center;margin-top:8px;color:var(--ink-soft)">다음 화면에서 틀린 문항을 함께 봅니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 CARD ④ -->
+    <section class="screen center" id="sc-ch4">
+      <div class="cardc">
+        <div class="card-num">④</div>
+        <div class="card-act">PART 4 · 리뷰</div>
+        <h2>틀린 이유를 설명한다</h2>
+        <p class="cline">단순히 정답을 알려주는 게 아니라, “당신 같은 프로필의 학생이 왜 이 답을 골랐는지”를 짚습니다.</p>
+      </div>
+    </section>
+
+    <!-- 9 REVIEW A (빈칸, full) -->
+    <section class="screen" id="sc-reviewA">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 4 · 리뷰 (1/2)</div>
+          <h2 class="sec-title">틀린 문항 — 빈칸 추론</h2>
+          <p class="sec-desc">Okay, let's go through the questions you answered incorrectly! If you want to go through any others that you guessed as well, just click through the solutions on each of them. It will explain why someone with your profile may have answered incorrectly.</p>
+        </div>
+        <div class="q">
+          <div class="qt">Question 2 · 빈칸 추론</div>
+          <div class="stem">다음 빈칸에 들어갈 말로 가장 적절한 것은?</div>
+          <div class="passage">Assessments of which buildings deserve to endure have shifted in every generation. Monuments one era protects, a later era dismisses as imitation, and structures once condemned as eyesores enter the canon* of architecture. Whatever merit a building is granted rests, at best, on a present-day consensus, and every consensus of this kind has in time given way to another. Members of preservation boards know this instability well, whether they rule on a private petition or a public landmark. To list a building is to claim for it a place in architectural history, or to claim nothing beyond shelter and sentiment. An approved listing asserts a belief about the future: that the building will hold a significant place in architecture as a whole. No present consensus can underwrite** such an assertion; the listing is, in the end, the board's own act. Through it the members affirm not only their architectural judgment, from whatever training it derives, but the conviction that <span class="blank">____________</span>.
+            <div class="gloss">* canon: 정전(공인된 목록) &nbsp;&nbsp; ** underwrite: 보증하다</div>
+          </div>
+          <div class="opt bad"><span class="n">①</span><span>the present-day consensus will secure the building's merit for good</span><span class="rtag">✕ 내 답</span></div>
+          <div class="opt"><span class="n">②</span><span>a building's significance is fixed by its architect's original intent</span></div>
+          <div class="opt good"><span class="n">③</span><span>they can foresee the direction architecture will take</span><span class="rtag">✓ 정답</span></div>
+          <div class="opt"><span class="n">④</span><span>the listing will raise the building's economic value at once</span></div>
+          <div class="opt"><span class="n">⑤</span><span>future generations are bound to honour the judgments of the past</span></div>
+          <div class="coach">
+            <div class="ch2">Why someone with your profile chose ①</div>
+            <p>You chose answer ① here. This is a classic distractor choice that tricks the reader by repeating words used throughout the passage, in this case <b>present-day, consensus,</b> and <b>merit</b>; the question writer is relying on the reader matching words instead of following the argument. This comes back to your inference. The correct answer, ③, needed you to connect three ideas: what people value keeps changing, a listing still claims the future, so the judgement is in the end the board's own. To avoid this in future, before you choose, ask whether an option is just repeating the passage's words. What is the relationship between the ideas, not the words?</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 REVIEW B (서술형, full) -->
+    <section class="screen" id="sc-reviewB">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 4 · 리뷰 (2/2)</div>
+          <h2 class="sec-title">틀린 문항 — 서술형</h2>
+          <p class="sec-desc">같은 약점이 쓰기에서도 나타납니다. 진단의 “힌트 없는 쓰기”와 같은 자리입니다.</p>
+        </div>
+        <div class="q">
+          <div class="qt">Question 5 · 서술형 (조건 영작)</div>
+          <div class="stem">관계절을 사용하여 다음 우리말을 영어로 쓰시오.</div>
+          <div class="passage" style="font-family:var(--sans);font-size:15px">"수집가가 산 그림은 예술사의 한 부분이 된다."</div>
+          <div class="wrote"><span class="l">내가 쓴 답:</span>Painting collector bought become a part of art history.</div>
+          <div class="coach">
+            <div class="ch2">Why someone with your profile lost marks here</div>
+            <p>Here you got the hard part right, the relative clause <b>the painting the collector bought</b>, which is the trickiest piece. The slips are small: a missing article (<b>the</b> or <b>a</b>), and <b>become</b> should be <b>becomes</b>. This is the writing to a word constraint issue from your diagnostic. On a multiple-choice question you would recognise the correct sentence, but producing it yourself is where the mistakes appear. To improve this, practise writing the sentence from scratch and check two things each time: did you include the article, and does the verb agree with the subject?</p>
+          </div>
+        </div>
+        <div class="correctlist">
+          <b>You got these right (tap any to review):</b>
+          <div class="rowc"><span class="ok">✓</span> Question 1 · 주제 — significance of animal size in life spans and survival</div>
+          <div class="rowc"><span class="ok">✓</span> Question 3 · 순서 — art collector and the value of acquisition</div>
+          <div class="rowc"><span class="ok">✓</span> Question 4 · 함의 추론 — globalization and decentralized decisions</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 CARD ⑤ -->
+    <section class="screen center" id="sc-ch5">
+      <div class="cardc">
+        <div class="card-num">⑤</div>
+        <div class="card-act">PART 5 · 학습 계획</div>
+        <h2>맞춤 학습으로 연결한다</h2>
+        <p class="cline">진단과 실전이 같은 곳을 가리키면, 무엇을 어떤 자료로 연습할지 정해집니다. 이미 가진 자료도 그대로 붙습니다.</p>
+      </div>
+    </section>
+
+    <!-- 12 PLAN (Report #2, verbatim) -->
+    <section class="screen" id="sc-plan">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 5 · 학습 계획</div>
+          <h2 class="sec-title">Max의 학습 계획</h2>
+        </div>
+        <div class="efut-banner">Built on eFuture's own catalogue content.</div>
+        <p style="font-size:15.5px;color:var(--ink-soft);line-height:1.62">Your diagnostic and exam performance point towards the same skills that would be worth improving. That is good, because it means the things to work on are clear, not scattered. Your reading is strong, so the biggest gain is in your inference, the same skill that let you down on the 빈칸 question above. Overall, your writing is in a good place so you could improve this even further to differentiate yourself from other candidates. The main thing is to write free-form, without hints, and to watch your word constraints. And keep building your vocabulary in context, not just recognition.</p>
+        <p style="margin:14px 0 4px;font-size:15.5px;color:var(--ink-soft)">Here are some workbook exercises that will be useful to work with. This resource is best for vocab, this exercise for improving writing, and this one for inference practice.</p>
+        <div class="mat"><div class="ic">📖</div><div class="mb"><div class="mk">eFuture</div><div class="mt">Inference &amp; paraphrase — reading practice</div></div><div class="mc"><button class="btn soft sm" onclick="alert('Opens the resource.')">Open</button><button class="btn sm btn-accent" onclick="alert('A practice set was created for your teacher.')">Make a set</button></div></div>
+        <div class="mat"><div class="ic">✍️</div><div class="mb"><div class="mk">eFuture</div><div class="mt">Writing free-form, no hints — to a word constraint</div></div><div class="mc"><button class="btn soft sm" onclick="alert('Opens the resource.')">Open</button><button class="btn sm btn-accent" onclick="alert('A practice set was created for your teacher.')">Make a set</button></div></div>
+        <div class="mat"><div class="ic">🔤</div><div class="mb"><div class="mk">eFuture</div><div class="mt">Vocabulary in context — definitions &amp; synonyms</div></div><div class="mc"><button class="btn soft sm" onclick="alert('Opens the resource.')">Open</button><button class="btn sm btn-accent" onclick="alert('A practice set was created for your teacher.')">Make a set</button></div></div>
+      </div>
+    </section>
+
+    <!-- 13 CLOSE -->
+    <section class="screen center" id="sc-close">
+      <div class="closing">
+        <h3>진단 → 프로필 → 실전 → 리뷰 → 학습, 하나의 흐름.</h3>
+        <p id="closeSub">eFuture · 이 진단이 기존 콘텐츠·IP 위에 그대로 얹힙니다.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <button class="btn btn-ghost" id="btnPrev">← 이전</button>
+    <span class="hint"><span class="key">←</span><span class="key">→</span> 또는 클릭으로 이동</span>
+    <button class="btn btn-primary" id="btnNext">다음 →</button>
+  </nav>
+</div>
+
+<script>
+  var SCREENS=[
+    {id:'sc-cover',ch:0},
+    {id:'sc-ch1',ch:1},{id:'sc-diagA',ch:1},{id:'sc-diagB',ch:1},
+    {id:'sc-ch2',ch:2},{id:'sc-results',ch:2},
+    {id:'sc-ch3',ch:3},{id:'sc-exam',ch:3},
+    {id:'sc-ch4',ch:4},{id:'sc-reviewA',ch:4},{id:'sc-reviewB',ch:4},
+    {id:'sc-ch5',ch:5},{id:'sc-plan',ch:5},
+    {id:'sc-close',ch:0}
+  ];
+  var cur=0;
+  function goTo(i){ cur=Math.max(0,Math.min(SCREENS.length-1,i)); render(); }
+  function go(d){ goTo(cur+d); }
+  function render(){
+    SCREENS.forEach(function(s,i){ var el=document.getElementById(s.id); if(el) el.classList.toggle('active', i===cur); });
+    var s=SCREENS[cur];
+    var el=document.getElementById(s.id); if(el) el.scrollTop=0;
+    document.getElementById('topbar').style.display=(s.ch===0)?'none':'flex';
+    document.querySelectorAll('.ch').forEach(function(b){
+      var c=parseInt(b.querySelector('.n').textContent,10);
+      b.classList.toggle('on', c===s.ch);
+      b.classList.toggle('done', c<s.ch);
+    });
+    document.getElementById('pfill').style.width=(cur/(SCREENS.length-1)*100)+'%';
+    var prev=document.getElementById('btnPrev'), next=document.getElementById('btnNext');
+    prev.style.visibility=(cur===0)?'hidden':'visible';
+    if(s.id==='sc-cover'){ next.textContent='데모 시작 →'; next.className='btn btn-primary big'; }
+    else if(s.id==='sc-close'){ next.textContent='처음으로 ↺'; next.className='btn btn-ghost'; }
+    else { next.textContent='다음 →'; next.className='btn btn-primary'; }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('btnNext').addEventListener('click', function(){ if(SCREENS[cur].id==='sc-close') goTo(0); else go(1); });
+    document.getElementById('btnPrev').addEventListener('click', function(){ go(-1); });
+    document.querySelectorAll('.ch').forEach(function(b){ b.addEventListener('click', function(){ goTo(parseInt(b.getAttribute('data-go'),10)); }); });
+    goTo(0);
+  });
+  document.addEventListener('keydown', function(e){
+    var t=(e.target.tagName||'').toUpperCase(); if(t==='INPUT'||t==='TEXTAREA') return;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key===' '){ e.preventDefault(); if(SCREENS[cur].id!=='sc-close') go(1); }
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp'){ e.preventDefault(); go(-1); }
+    else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+  });
+  function pickSize(el){
+    document.querySelectorAll('#sizes button').forEach(function(b){b.classList.remove('pick')});
+    el.classList.add('pick');
+    document.getElementById('examResult').style.display='block';
+  }
+</script>
+</body>
+</html>

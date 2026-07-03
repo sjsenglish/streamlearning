@@ -1,0 +1,791 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ExamRizz — the diagnostic rubric</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif+KR:wght@400;600;700&display=swap');
+
+  :root{
+    --ink:#22405f; --teal:#1f7a6b; --amber:#c8821a; --plum:#7a5298; --garnet:#9c3f51;
+    --paper:#fbfaf7; --card:#ffffff; --line:#e7e2d8; --text:#1f1d17; --mute:#6c665b; --faint:#a8a092;
+    --route:#c3cedb;
+    /* band-zone tints (shared scale, dimension-independent) */
+    --z-found:#efece4; --z-mass:#e6edf4; --z-elite:#fbf2e2; --z-above:#f1ebf7;
+    --z-found-t:#7a7363; --z-mass-t:#3f5a78; --z-elite-t:#8a661f; --z-above-t:#6a4b8c;
+    --accent:var(--ink); --accent-bg:#e8eef4; --accent-line:#c3cedb;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#ece8df;
+    font-family:Inter,'Noto Sans KR',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding:26px 14px;
+  }
+
+  .page{
+    width:794px; min-height:1123px; margin:0 auto 26px;
+    background:var(--paper);
+    box-shadow:0 10px 50px rgba(40,32,20,.16);
+    padding:24px 38px 16px;
+    display:flex; flex-direction:column;
+  }
+  .page:last-child{margin-bottom:0;}
+
+  /* dimension accents */
+  .d-vocab{--accent:#1f7a6b;--accent-bg:#e9f3f1;--accent-line:#bfe0d8;}
+  .d-gram {--accent:#b97714;--accent-bg:#fbf3e5;--accent-line:#ecdcb8;}
+  .d-read {--accent:#22405f;--accent-bg:#e8eef4;--accent-line:#c3cedb;}
+  .d-write{--accent:#7a5298;--accent-bg:#f3eef8;--accent-line:#ddd0ea;}
+  .d-exam {--accent:#9c3f51;--accent-bg:#f7ebee;--accent-line:#e6c9d1;}
+
+  /* ---------- page header ---------- */
+  .phead{display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--accent); padding-bottom:10px; gap:26px;}
+  .brand{flex:1; min-width:0;}
+  .brand .eyebrow{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--accent); font-weight:500;}
+  .brand .ptitle{font-family:Fraunces,'Noto Serif KR',serif; font-weight:600; font-size:29px; line-height:1.04; margin:5px 0 0; color:var(--ink); letter-spacing:-.015em;}
+  .brand .ptitle .sub{font-weight:400; color:var(--mute); font-size:29px;}
+  .phead .pthesis{flex:0 0 318px; max-width:318px; text-align:right; font-size:11px; line-height:1.5; color:var(--mute);}
+  .phead .pthesis b{color:var(--text); font-weight:600;}
+  .pnum{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); display:block; margin-bottom:4px;}
+
+  .seclabel{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9.5px; letter-spacing:.04em; text-transform:uppercase; color:var(--faint); font-weight:500; margin:0 0 6px;}
+
+  /* ---------- shared band-scale key ---------- */
+  .bandkey{display:flex; gap:5px; margin:10px 0 3px;}
+  .bk-seg{flex:1; border-radius:5px; padding:4px 9px; border:1px solid transparent;}
+  .bk-seg .bk-range{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:11px; font-weight:500;}
+  .bk-seg .bk-label{font-size:9px; line-height:1.3; margin-top:1px;}
+  .bk-found{background:var(--z-found);border-color:#e2ddd0;} .bk-found .bk-range,.bk-found .bk-label{color:var(--z-found-t);}
+  .bk-mass{background:var(--z-mass);border-color:#d3deea;} .bk-mass .bk-range,.bk-mass .bk-label{color:var(--z-mass-t);}
+  .bk-elite{background:var(--z-elite);border-color:#eddfbf;} .bk-elite .bk-range,.bk-elite .bk-label{color:var(--z-elite-t);}
+  .bk-above{background:var(--z-above);border-color:#e1d4ef;} .bk-above .bk-range,.bk-above .bk-label{color:var(--z-above-t);}
+  .bandkey.mini{margin:0;}
+  .bandkey.mini .bk-seg{padding:4px 8px;}
+  .bandkey.mini .bk-range{font-size:9.5px;}
+
+  /* ---------- hero wrapper ---------- */
+  .hero{margin-top:8px;}
+  .hero-cap{font-size:10.5px; color:var(--mute); line-height:1.48; margin-top:5px; max-width:640px;}
+  .hero-cap b{color:var(--text); font-weight:600;}
+
+  /* ===========================================================
+     PAGE 1 — profile visualiser
+     =========================================================== */
+  .profile{display:flex; gap:18px; align-items:stretch;}
+  .pf-plot{position:relative; height:236px; flex:1; border-left:2px solid var(--line); border-bottom:2px solid var(--line);}
+  .pf-zone{position:absolute; left:0; right:0; display:flex; align-items:center; justify-content:flex-end; padding-right:9px;}
+  .pf-zone span{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8.5px; letter-spacing:.04em; opacity:.8;}
+  .pf-zone.zf{background:var(--z-found);} .pf-zone.zf span{color:var(--z-found-t);}
+  .pf-zone.zm{background:var(--z-mass);} .pf-zone.zm span{color:var(--z-mass-t);}
+  .pf-zone.ze{background:var(--z-elite);} .pf-zone.ze span{color:var(--z-elite-t);}
+  .pf-zone.za{background:var(--z-above);} .pf-zone.za span{color:var(--z-above-t);}
+  .pf-bars{position:absolute; left:0; right:0; bottom:0; height:236px; display:flex; align-items:flex-end; justify-content:space-around; padding:0 14px; z-index:2;}
+  .pf-bar{width:74px; display:flex; flex-direction:column; align-items:center;}
+  .pf-fill{width:46px; border-radius:6px 6px 0 0; position:relative; display:flex; align-items:flex-start; justify-content:center;}
+  .pf-fill b{font-family:Fraunces,'Noto Serif KR',serif; color:#fff; font-size:15px; font-weight:600; margin-top:5px;}
+  .pf-fill.v{background:var(--teal);} .pf-fill.g{background:var(--amber);} .pf-fill.r{background:var(--ink);} .pf-fill.w{background:var(--plum);} .pf-fill.e{background:var(--garnet);}
+  .pf-name{font-size:9px; color:var(--text); font-weight:600; margin-top:6px; text-align:center; line-height:1.2;}
+  .pf-yaxis{display:flex; flex-direction:column; justify-content:space-between; font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8.5px; color:var(--faint); padding:2px 0 14px; width:14px;}
+
+  .xlink{flex:0 0 248px; background:var(--card); border:1px solid var(--line); border-left:3px solid var(--garnet); border-radius:8px; padding:13px 15px;}
+  .xlink h4{font-family:Fraunces,'Noto Serif KR',serif; font-size:13.5px; color:var(--ink); margin:0 0 3px;}
+  .xlink .q{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9px; color:var(--garnet); letter-spacing:.04em; text-transform:uppercase; margin-bottom:9px;}
+  .xlink .need, .xlink .has{display:flex; gap:7px; font-size:10.5px; margin-bottom:5px; align-items:baseline;}
+  .xlink .lbl{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8.5px; color:var(--mute); width:54px; flex:none; padding-top:1px;}
+  .xlink .chip{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9.5px; padding:1px 6px; border-radius:4px; font-weight:500;}
+  .xlink .chip.ok{background:#eaf3ef; color:#1f6a5a;}
+  .xlink .chip.low{background:#f7ebee; color:#9c3f51;}
+  .xlink .verdict{margin-top:10px; padding-top:9px; border-top:1px dashed var(--line); font-size:10.5px; line-height:1.5; color:#36332b;}
+  .xlink .verdict b{color:var(--garnet);}
+
+  /* flow strip */
+  .flow{display:flex; align-items:stretch; gap:0; margin-top:6px;}
+  .flow-step{flex:1; background:var(--card); border:1px solid var(--line); border-radius:7px; padding:7px 11px; position:relative;}
+  .flow-step .fs-k{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:2px;}
+  .flow-step .fs-t{font-size:10.5px; line-height:1.35; color:#36332b;}
+  .flow-step .fs-t b{color:var(--ink); font-weight:600;}
+  .flow-arrow{align-self:center; color:var(--faint); font-size:14px; padding:0 6px;}
+  .flow-step.hot{border-color:var(--accent-line); background:var(--accent-bg);}
+
+  /* thesis strip */
+  .thesis-strip{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:6px;}
+  .ts-item{display:flex; gap:9px; align-items:flex-start;}
+  .ts-item .tn{font-family:Fraunces,'Noto Serif KR',serif; font-size:17px; font-weight:600; color:var(--accent); line-height:1; flex:none; width:18px;}
+  .ts-item .tb{font-size:10.5px; line-height:1.5; color:#36332b;}
+  .ts-item .tb b{color:var(--ink); font-weight:600;}
+
+  /* ===========================================================
+     DETAIL BLOCKS (operations table + zone ladder)
+     =========================================================== */
+  .detail{display:flex; gap:24px; margin-top:9px;}
+  .detail-col{flex:1; min-width:0;}
+  .detail-col.wide{flex:1.15;}
+
+  .opsTable{width:100%; border-collapse:collapse;}
+  .opsTable td{vertical-align:top; padding:4.5px 0; border-bottom:1px solid var(--line);}
+  .opsTable tr:last-child td{border-bottom:none;}
+  .op-name{width:104px; padding-right:10px !important;}
+  .op-name .on{font-family:Fraunces,'Noto Serif KR',serif; font-size:11.5px; font-weight:600; color:var(--ink); line-height:1.2; display:block;}
+  .op-name .ord{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8px; color:var(--accent); letter-spacing:.06em; display:block; margin-top:2px;}
+  .op-body .od{font-size:10.5px; line-height:1.42; color:#36332b;}
+  .op-body .oe{font-size:9.5px; line-height:1.4; color:var(--mute); margin-top:3px; display:block; font-family:'JetBrains Mono','Noto Sans KR',monospace;}
+  .op-body .oe .k{color:var(--accent); font-weight:500;}
+  .floored{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:8px; color:var(--faint); border:1px solid var(--line); border-radius:3px; padding:0 4px; margin-left:5px; white-space:nowrap;}
+
+  .zoneLadder{display:flex; flex-direction:column; gap:5px;}
+  .zl-row{display:grid; grid-template-columns:62px 1fr; gap:11px; padding:5px 10px; border-radius:6px;}
+  .zl-row.zf{background:var(--z-found);} .zl-row.zm{background:var(--z-mass);} .zl-row.ze{background:var(--z-elite);} .zl-row.za{background:var(--z-above);}
+  .zl-band{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:13px; font-weight:500; line-height:1;}
+  .zl-zone{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:7.5px; letter-spacing:.03em; margin-top:3px; line-height:1.2;}
+  .zf .zl-band,.zf .zl-zone{color:var(--z-found-t);} .zm .zl-band,.zm .zl-zone{color:var(--z-mass-t);}
+  .ze .zl-band,.ze .zl-zone{color:var(--z-elite-t);} .za .zl-band,.za .zl-zone{color:var(--z-above-t);}
+  .zl-content .zc{font-size:10px; line-height:1.42; color:#2c2a23;}
+  .zl-content .zc b{font-weight:600;}
+  .zl-content .ze-eg{font-size:9px; color:var(--mute); margin-top:3px; display:block; font-style:italic;}
+
+  /* ---------- signal callout ---------- */
+  .signal{margin-top:8px; background:var(--accent-bg); border:1px solid var(--accent-line); border-radius:9px; padding:9px 14px; display:flex; gap:16px; align-items:flex-start;}
+  .signal .sig-h{font-family:Fraunces,'Noto Serif KR',serif; font-size:14px; font-weight:600; color:var(--accent); flex:0 0 150px; line-height:1.25;}
+  .signal .sig-b{font-size:10.5px; line-height:1.55; color:#33302a;}
+  .signal .sig-b b{color:var(--ink); font-weight:600;}
+
+  .ground{margin-top:6px; font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9px; color:var(--mute); line-height:1.65; letter-spacing:.01em;}
+  .ground b{color:var(--ink); font-weight:500;}
+  .ground .tag{padding:1px 5px; border-radius:3px; background:#eef3ef; color:#1f6a5a; margin-right:2px;}
+  .ground .tag.auth{background:#f5eef8; color:#5e3f80;}
+
+  /* ---------- footer ---------- */
+  .pfoot{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:6px; border-top:2px solid var(--accent); font-size:10px; color:var(--mute);}
+  .pfoot b{color:var(--ink);}
+  .pfoot .meta{font-family:'JetBrains Mono','Noto Sans KR',monospace; font-size:9px; letter-spacing:.02em;}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .page{box-shadow:none; width:794px; min-height:1123px; margin:0 auto; padding:25px 38px 19px; page-break-after:always;}
+    .page:last-child{page-break-after:auto;}
+    @page{size:A4; margin:0;}
+  }
+  @media (max-width:760px){
+    .page{width:100%; min-height:auto; padding:24px 18px;}
+    .profile{flex-direction:column;} .xlink{flex:none;}
+    .detail{flex-direction:column; gap:18px;}
+    .flow{flex-direction:column;} .flow-arrow{transform:rotate(90deg); padding:3px 0;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAGE 1 · THE INSTRUMENT (five-dimension visualiser)
+     ============================================================ -->
+<section class="page">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">진단 도구 · 개요</span>
+      <div class="eyebrow">ExamRizz · 5개 영역 프로파일</div>
+      <div class="ptitle">프로파일이 <span class="sub">실수를 예측하는 이유</span></div>
+    </div>
+    <div class="pthesis">
+      5개의 독립적인 능력 점수를 <b>하나의 공통 1–10 척도</b>로 나타냅니다. 시험은 학생이 <i>무엇을</i> 틀렸는지 알려 주지만, 이 프로파일은 학생이 답하기도 전에 <b>왜</b> 틀릴지를 알려 줍니다.
+    </div>
+  </header>
+
+  <div class="bandkey">
+    <div class="bk-seg bk-found"><div class="bk-range">1 – 4</div><div class="bk-label">기초 · 수능 이하</div></div>
+    <div class="bk-seg bk-mass"><div class="bk-range">5 – 6</div><div class="bk-label">수능 일반 · 대다수</div></div>
+    <div class="bk-seg bk-elite"><div class="bk-range">7 – 8</div><div class="bk-label">수능 1등급</div></div>
+    <div class="bk-seg bk-above"><div class="bk-range">9 – 10</div><div class="bk-label">수능 이상 · 특목고 · 논술</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="seclabel">한 학생, 다섯 개의 상한 · 원점수 73 / 100 · 3등급</div>
+    <div class="profile">
+      <div class="pf-yaxis"><span>10</span><span>8</span><span>6</span><span>4</span><span>2</span></div>
+      <div class="pf-plot">
+        <div class="pf-zone zf" style="bottom:0;height:92px"><span>1–4</span></div>
+        <div class="pf-zone zm" style="bottom:92px;height:47px"><span>5–6 수능 일반</span></div>
+        <div class="pf-zone ze" style="bottom:139px;height:47px"><span>7–8 1등급</span></div>
+        <div class="pf-zone za" style="bottom:186px;height:50px"><span>9–10 이상</span></div>
+        <div class="pf-bars">
+          <div class="pf-bar"><div class="pf-fill v" style="height:115px"><b>5</b></div><div class="pf-name">어휘</div></div>
+          <div class="pf-bar"><div class="pf-fill g" style="height:115px"><b>5</b></div><div class="pf-name">어법</div></div>
+          <div class="pf-bar"><div class="pf-fill r" style="height:138px"><b>6</b></div><div class="pf-name">독해</div></div>
+          <div class="pf-bar"><div class="pf-fill w" style="height:92px"><b>4</b></div><div class="pf-name">작문</div></div>
+          <div class="pf-bar"><div class="pf-fill e" style="height:115px"><b>5</b></div><div class="pf-name">시험<br>기술</div></div>
+        </div>
+      </div>
+      <div class="xlink">
+        <h4>교차 연결</h4>
+        <div class="q">Q31 · 빈칸 (3점) · ④ 선택, 오답</div>
+        <div class="need"><span class="lbl">문항 요구</span><span class="chip low">국소 추론 7</span></div>
+        <div class="need" style="margin-left:54px"><span class="chip low">어휘 정밀성 6</span></div>
+        <div class="has"><span class="lbl">보유 수준</span><span class="chip ok">추론 5</span> <span class="chip ok">정밀성 5</span></div>
+        <div class="verdict">두 상한이 모두 요구 수준보다 낮으므로, 엔진은 <b>답을 읽기 전에 이미 오답 가능성이 높다</b>고 표시합니다. 학생이 고른 선지는 지문의 단어를 그대로 가져온 것으로, 정밀성 5 상한으로는 빠져나오기 어려운 단어 반복 함정입니다.</div>
+      </div>
+    </div>
+    <div class="hero-cap">점수는 하나의 숫자일 뿐이지만, <b>프로파일은 예측입니다</b>. 각 영역은 학생이 안정적으로 도달하는 가장 높은 단계로 채점됩니다. 한 문항은 여러 영역에서 동시에 최소 단계를 요구하며, 학생은 그중 가장 약한 영역에 의해 좌우됩니다. 엔진은 이렇게 오래된 의문, 곧 <b>쉬운 문제는 틀리고 어려운 문제는 맞히는 현상</b>을 설명합니다.</div>
+  </div>
+
+  <div style="margin-top:12px">
+    <div class="seclabel">진단을 도출하는 방식 · 서로 검증하는 두 단계</div>
+    <div class="flow">
+      <div class="flow-step"><div class="fs-k">1단계 · 능력</div><div class="fs-t"><b>적응형 진단</b><br>각 영역을 5단계부터 상한까지 단계적으로 올립니다.</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="fs-k">산출물</div><div class="fs-t"><b>리포트 #1</b><br>5개 영역 프로파일.</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="fs-k">2단계 · 실전</div><div class="fs-t"><b>실전 문항 세트</b><br>실제 시험을 복제한 3 / 5 / 10 / 15 / 28문항.</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><div class="fs-k">오답별</div><div class="fs-t"><b>오답 분석</b><br>프로파일을 토대로 <i>왜 이 선지</i>를 골랐는지.</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step hot"><div class="fs-k">산출물</div><div class="fs-t"><b>리포트 #2</b><br>진단 + 학습 경로.</div></div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px">
+    <div class="seclabel">무엇이 이 도구를 견고하게 하는가</div>
+    <div class="thesis-strip">
+      <div class="ts-item"><div class="tn">1</div><div class="tb"><b>의사결정 수준의 진단.</b> 기존 오답 분석은 문항 유형이나 인지 특성 수준에서 멈춥니다. 이 도구는 <b>추론 · 함정 수준</b>, 곧 점수를 잃게 만든 실제 선택까지 도달합니다.</div></div>
+      <div class="ts-item"><div class="tn">2</div><div class="tb"><b>격차가 핵심입니다.</b> 학생의 상한 <i>사이의</i> 거리 — 8단계를 인식하지만 4단계를 산출 — 가 그 어떤 단일 점수보다 많은 것을 말해 줍니다.</div></div>
+      <div class="ts-item"><div class="tn">3</div><div class="tb"><b>선형이 아니라 모듈형.</b> 아는 단어 1,200개가 1,000개보다 "앞선" 것은 아닙니다. 각 영역은 폭만이 아니라 깊이 · 활용 · 맥락을 함께 채점합니다.</div></div>
+      <div class="ts-item"><div class="tn">4</div><div class="tb"><b>하나로 정렬된 척도.</b> 8단계는 모든 영역에서 같은 의미를 가지므로, 교차 연결("여기서 4단계 이상, 저기서 6단계 이상 필요")이 프로파일 전체에서 일관됩니다.</div></div>
+    </div>
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · Stream Learning · 스트림 러닝</div>
+    <div class="meta">01 / 06 · 개요</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 2 · VOCABULARY
+     ============================================================ -->
+<section class="page d-vocab">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">영역 1 / 5</span>
+      <div class="eyebrow">어휘</div>
+      <div class="ptitle">세 가지 격차, <span class="sub">하나의 점수가 아닙니다</span></div>
+    </div>
+    <div class="pthesis">
+      폭은 그중 가장 작은 부분입니다. 이 도구는 <b>단어를 아는 능력</b>, <b>모르는 단어를 복원하는 능력</b>, <b>단어를 운용하는 능력</b>을 구분합니다 — 단어 수 하나로는 가려지는 세 가지 능력입니다.
+    </div>
+  </header>
+
+  <div class="bandkey">
+    <div class="bk-seg bk-found"><div class="bk-range">1 – 4</div><div class="bk-label">핵심 → 중빈도 · NGSL ≤ 2,800</div></div>
+    <div class="bk-seg bk-mass"><div class="bk-range">5 – 6</div><div class="bk-label">학술 핵심 · NAWL / AWL · 수능 진입</div></div>
+    <div class="bk-seg bk-elite"><div class="bk-range">7 – 8</div><div class="bk-label">저빈도 격식 · COCA 5k–10k</div></div>
+    <div class="bk-seg bk-above"><div class="bk-range">9 – 10</div><div class="bk-label">희귀 어휘 · 의도적으로 심은 1회 출현어</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="seclabel">고유 형태 · 각 능력 요소가 척도에서 차지하는 위치</div>
+    <!-- three-gaps tracks -->
+    <div style="display:flex; flex-direction:column; gap:6px; margin-top:5px;">
+      <!-- legend -->
+      <div style="display:flex; gap:18px; font-size:9px; color:var(--mute); font-family:'JetBrains Mono','Noto Sans KR',monospace; margin-bottom:1px;">
+        <span><span style="display:inline-block;width:18px;height:8px;background:var(--teal);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>작동 구간</span>
+        <span><span style="display:inline-block;width:18px;height:8px;background:repeating-linear-gradient(45deg,#e3ded3,#e3ded3 3px,#f1ede5 3px,#f1ede5 6px);border-radius:2px;vertical-align:middle;margin-right:4px;"></span>범위 밖 — 측정 안 함</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border:2px solid var(--garnet);border-radius:50%;vertical-align:middle;margin-right:4px;"></span>암기형 학생의 상한</span>
+      </div>
+      <!-- track template: 10 columns -->
+      <!-- V Recognition -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">인식 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">폭 · 일반적 시험</span></div>
+        <div style="position:relative;height:18px;background:#f1ede5;border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:88%;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;left:62%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+      <!-- V Precision -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">정밀성 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">정확한 의미 · 함의</span></div>
+        <div style="position:relative;height:18px;background:#f1ede5;border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;left:46%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+      <!-- V Network -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">연결망 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">유의어 · 의미장 · 연어</span></div>
+        <div style="position:relative;height:18px;background:#f1ede5;border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:100%;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;left:44%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+      <!-- V Morphological reach -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">형태 확장 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">어근 → 모르는 단어</span></div>
+        <div style="position:relative;height:18px;background:repeating-linear-gradient(45deg,#e3ded3,#e3ded3 3px,#f1ede5 3px,#f1ede5 6px);border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:40%;top:0;bottom:0;right:0;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;left:50%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+      <!-- V Contextual inference -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">맥락 추론 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">문맥 → 모르는 단어 · 최상위 능력</span></div>
+        <div style="position:relative;height:18px;background:repeating-linear-gradient(45deg,#e3ded3,#e3ded3 3px,#f1ede5 3px,#f1ede5 6px);border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:40%;top:0;bottom:0;right:0;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;left:43%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+      <!-- V Productive use -->
+      <div style="display:grid;grid-template-columns:128px 1fr;gap:10px;align-items:center;">
+        <div style="font-size:10px;color:var(--ink);font-weight:600;font-family:Fraunces,'Noto Serif KR',serif;">산출 활용 <span style="display:block;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);font-weight:400;">작문에서 운용</span></div>
+        <div style="position:relative;height:18px;background:#f1ede5;border-radius:4px;overflow:hidden;">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:90%;background:var(--teal);opacity:.85;"></div>
+          <div style="position:absolute;right:0;top:0;bottom:0;width:10%;background:repeating-linear-gradient(45deg,#e3ded3,#e3ded3 3px,#f1ede5 3px,#f1ede5 6px);"></div>
+          <div style="position:absolute;left:40%;top:-3px;width:12px;height:24px;border:2px solid var(--garnet);border-radius:50%;background:#fff;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-cap">추론과 형태 능력은 폭 상한 <b>위에서</b> 측정됩니다 — 배운 적 없는 단어를 학생이 어떻게 다루는지를 재는데, 이는 시험이 의도적으로 심어 두는 부분입니다. 암기형 학생의 표시는 인식에서는 높고 나머지에서는 모두 낮습니다: <b>그 낙차가 곧 진단입니다.</b></div>
+  </div>
+
+  <div class="detail">
+    <div class="detail-col">
+      <div class="seclabel">각 능력 요소가 측정하는 것</div>
+      <table class="opsTable">
+        <tr><td class="op-name"><span class="on">인식</span><span class="ord">폭</span></td><td class="op-body"><div class="od">형태 ↔ 의미: 올바른 뜻을 제시합니다. 일반적인 시험이며, 여기서의 상한은 순수한 폭입니다.</div><span class="oe"><span class="k">예</span> constituent → 구성 요소</span></td></tr>
+        <tr><td class="op-name"><span class="on">정밀성</span><span class="ord">의미</span></td><td class="op-body"><div class="od">가까운 선지들 중 올바른 <b>의미</b>를 고르고, 함의와 격식을 조절합니다. 한국 학생의 전형적 실패 — 한 가지 뜻만 외워 두 번째 의미에서 무너집니다.</div><span class="oe"><span class="k">예</span> run a fever / a run on the bank — not 달리다</span></td></tr>
+        <tr><td class="op-name"><span class="on">연결망</span><span class="ord">깊이</span></td><td class="op-body"><div class="od">유의어, 반의어, 연어, 의미장. 시험의 패러프레이즈 정답이 자리하는 곳입니다.</div><span class="oe"><span class="k">예</span> reinforce ↔ erode · estrangement vs alienation</span></td></tr>
+        <tr><td class="op-name"><span class="on">형태 확장</span><span class="ord">상한 위</span></td><td class="op-body"><div class="od">아는 어근이나 접사에서 <b>모르는</b> 단어를 복원합니다. <span class="floored">1–4단계 제외</span></div><span class="oe"><span class="k">예</span> spect- → inspect / circumspect / retrospect</span></td></tr>
+        <tr><td class="op-name"><span class="on">맥락 추론</span><span class="ord">상한 위</span></td><td class="op-body"><div class="od">주변 문맥에서 모르는 단어의 의미를 복원합니다 — 가장 가치가 높은 시험 능력입니다. <span class="floored">1–4단계 제외</span></div><span class="oe"><span class="k">예</span> "few choices…streamlined" → ≈ simplified</span></td></tr>
+        <tr><td class="op-name"><span class="on">산출 활용</span><span class="ord">운용</span></td><td class="op-body"><div class="od">산출에서 정확히 사용합니다 — 올바른 연어, 격식, 의미. <span class="floored">10단계 한정</span></div><span class="oe"><span class="k">예</span> "make a mistake" (not "do a mistake")</span></td></tr>
+      </table>
+    </div>
+    <div class="detail-col wide">
+      <div class="seclabel">각 수준에 속하는 어휘 · 실제 문항에서 뽑은 예시</div>
+      <div class="zoneLadder">
+        <div class="zl-row zf"><div><div class="zl-band">1–4</div><div class="zl-zone">기초</div></div><div class="zl-content"><div class="zc"><b>핵심 → 중빈도, 그리고 일반어의 상단.</b> 구체적이고 반드시 알아야 하며, 지문의 약 90%를 포괄합니다.</div><span class="ze-eg">good · run · water → increase · reduce · control → factor · get by · persistent · erode</span></div></div>
+        <div class="zl-row zm"><div><div class="zl-band">5–6</div><div class="zl-zone">수능 일반</div></div><div class="zl-content"><div class="zc"><b>학술 핵심 · 추상 어휘 — 변별의 시작점.</b> 시험 어휘의 90% 이상이 이 구간 이하에 있어, 변별력이 여기서부터 작동합니다.</div><span class="ze-eg">quantitative · constituent · predicated on · intrinsic → anomaly · construe · threshold · scarcity</span></div></div>
+        <div class="zl-row ze"><div><div class="zl-band">7–8</div><div class="zl-zone">1등급</div></div><div class="zl-content"><div class="zc"><b>저빈도 격식 · 문어; 미세한 변별.</b> 정답은 외연이 아니라 함의에서 갈립니다.</div><span class="ze-eg">tacit · estrangement · demote ↔ elevate → cluster: estrangement / alienation / disaffection</span></div></div>
+        <div class="zl-row za"><div><div class="zl-band">9–10</div><div class="zl-zone">수능 이상</div></div><div class="zl-content"><div class="zc"><b>희귀 문어 · 전문 어휘; 의도적으로 심은 1회 출현어.</b> 한 번만 등장하며, 순수 암기로는 닿지 못하고 추론이나 형태 능력으로만 도달합니다.</div><span class="ze-eg">telescoping (metaphorical) · the passage-specific hapax</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signal">
+    <div class="sig-h">핵심 신호: 세 가지 격차</div>
+    <div class="sig-b">어법에는 격차가 하나지만, 어휘에는 셋이 있습니다 — <b>폭</b>(인식) vs <b>모르는 단어 처리</b>(추론) vs <b>운용</b>(산출 활용). 순수 암기형 학생은 폭은 높고 추론과 산출은 낮습니다 — 바로 그 프로파일이 <b>고등학교에서 벽에 부딪힌다</b>는 것을 보여 주며, "쉬운 건 틀리고 어려운 건 맞히는" 이유에 대한 직접적인 답입니다.</div>
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · 어휘</div>
+    <div class="meta">02 / 06 · 능력 요소 × 어휘 난이도 단계</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 3 · GRAMMAR
+     ============================================================ -->
+<section class="page d-gram">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">영역 2 / 5</span>
+      <div class="eyebrow">어법</div>
+      <div class="ptitle">안다는 것 <span class="sub">≠ 만든다는 것</span></div>
+    </div>
+    <div class="pthesis">
+      암기 위주로 학습한 학생은 자신이 만들지 못하는 구조를 알아봅니다. <b>그 두 상한 사이의 거리</b>가 진단의 핵심 전부입니다 — "안다 ≠ 만든다"를 측정 가능한 숫자로 바꾼 것입니다.
+    </div>
+  </header>
+
+  <div class="bandkey">
+    <div class="bk-seg bk-found"><div class="bk-range">1 – 4</div><div class="bk-label">단문 → 첫 종속절</div></div>
+    <div class="bk-seg bk-mass"><div class="bk-range">5 – 6</div><div class="bk-label">다중 종속 · 가정법</div></div>
+    <div class="bk-seg bk-elite"><div class="bk-range">7 – 8</div><div class="bk-label">고급 가정 · 특수 구문</div></div>
+    <div class="bk-seg bk-above"><div class="bk-range">9 – 10</div><div class="bk-label">내포 학술 구문 · 희귀 격식</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="seclabel">고유 형태 · 다섯 능력 요소, 하나의 구문 사다리, 산출 낙차</div>
+    <div style="display:flex; gap:22px; align-items:flex-end; margin-top:8px;">
+      <!-- descending bar chart -->
+      <div style="flex:1; display:flex; align-items:flex-end; justify-content:space-around; height:130px; border-bottom:2px solid var(--line); border-left:2px solid var(--line); padding:0 6px; position:relative;">
+        <!-- gridline at 1등급 -->
+        <div style="position:absolute;left:0;right:0;bottom:90px;border-top:1px dashed #e0d8c8;"></div>
+        <div style="position:absolute;left:2px;bottom:92px;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--faint);">1등급 · 7–8</div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:74px;">
+          <div style="width:42px;height:96px;background:var(--amber);opacity:.9;border-radius:6px 6px 0 0;display:flex;justify-content:center;"><b style="font-family:Fraunces,'Noto Serif KR',serif;color:#fff;font-size:14px;margin-top:4px;">8</b></div>
+          <div style="font-size:9px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.2;">인식</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:74px;">
+          <div style="width:42px;height:72px;background:var(--amber);opacity:.78;border-radius:6px 6px 0 0;display:flex;justify-content:center;"><b style="font-family:Fraunces,'Noto Serif KR',serif;color:#fff;font-size:14px;margin-top:4px;">6</b></div>
+          <div style="font-size:9px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.2;">교정</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:74px;">
+          <div style="width:42px;height:48px;background:var(--amber);opacity:.66;border-radius:6px 6px 0 0;display:flex;justify-content:center;"><b style="font-family:Fraunces,'Noto Serif KR',serif;color:#fff;font-size:14px;margin-top:4px;">4</b></div>
+          <div style="font-size:9px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.2;">산출</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:74px;">
+          <div style="width:42px;height:60px;background:var(--amber);opacity:.55;border-radius:6px 6px 0 0;display:flex;justify-content:center;"><b style="font-family:Fraunces,'Noto Serif KR',serif;color:#fff;font-size:14px;margin-top:4px;">5</b></div>
+          <div style="font-size:9px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.2;">치환</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:74px;">
+          <div style="width:42px;height:60px;background:var(--amber);opacity:.45;border-radius:6px 6px 0 0;display:flex;justify-content:center;"><b style="font-family:Fraunces,'Noto Serif KR',serif;color:#fff;font-size:14px;margin-top:4px;">5</b></div>
+          <div style="font-size:9px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.2;">개선</div>
+        </div>
+      </div>
+      <!-- gap bracket -->
+      <div style="flex:0 0 150px; background:var(--card); border:1px solid var(--accent-line); border-radius:8px; padding:9px 12px;">
+        <div style="font-family:Fraunces,'Noto Serif KR',serif;font-size:30px;font-weight:600;color:var(--amber);line-height:1;">−4</div>
+        <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;color:var(--mute);letter-spacing:.04em;margin:4px 0 7px;">인식 − 산출</div>
+        <div style="font-size:10px;line-height:1.5;color:#36332b;">8단계의 특수 구문을 알아보지만, 산출은 4단계에 그칩니다. 분열문이 무엇<i>인지</i>는 알지만, 한국어 문장에서 직접 만들어 내지는 못합니다.</div>
+      </div>
+    </div>
+    <div class="hero-cap">하나의 구문 사다리 위 다섯 능력 요소. 학생은 실제로 만들어 낼 수 있는 수준보다 여러 단계 높은 구조를 알아볼 수 있으며, 두 숫자 각각이 아니라 바로 그 거리가 진단입니다.</div>
+  </div>
+
+  <div class="detail">
+    <div class="detail-col">
+      <div class="seclabel">각 능력 요소가 측정하는 것</div>
+      <table class="opsTable">
+        <tr><td class="op-name"><span class="on">인식</span><span class="ord">01 · 분석</span></td><td class="op-body"><div class="od">구문을 식별하고 분석합니다; 구조가 있는지 알아보고 이름을 붙입니다.</div><span class="oe"><span class="k">예</span> "It was John who broke it" → 분열문</span></td></tr>
+        <tr><td class="op-name"><span class="on">교정</span><span class="ord">02 · 수정</span></td><td class="op-body"><div class="od">오류를 찾아내고 <b>고친 형태까지 제시합니다</b> — 단순히 표시만 하지 않습니다. 어법과 서술형에서 점수가 새는 지점입니다.</div><span class="oe"><span class="k">예</span> "He go to school" → "He goes…"</span></td></tr>
+        <tr><td class="op-name"><span class="on">산출</span><span class="ord">03 · 생성</span></td><td class="op-body"><div class="od">한국어 문장에서 올바른 영어 문장을 보조 없이 생성합니다.</div><span class="oe"><span class="k">예</span> 공부했더라면 → "Had I studied, I would have passed."</span></td></tr>
+        <tr><td class="op-name"><span class="on">치환</span><span class="ord">04 · 재구성</span></td><td class="op-body"><div class="od">의미를 유지한 채 문장을 다른 구조로 변환합니다. <span class="floored">2차 요소</span></div><span class="oe"><span class="k">예</span> active ↔ passive · "If I had known" → "Had I known"</span></td></tr>
+        <tr><td class="op-name"><span class="on">개선</span><span class="ord">05 · 향상</span></td><td class="op-body"><div class="od">의미를 보존하면서 더 풍부한 구조로 교체합니다 — <b>문법적 다양성만</b> (수사는 작문 영역). <span class="floored">2차 요소</span></div><span class="oe"><span class="k">예</span> "It rained and we stayed in" → "Because it rained…"</span></td></tr>
+      </table>
+    </div>
+    <div class="detail-col wide">
+      <div class="seclabel">각 수준에 속하는 구문 · 공통 구문 사다리</div>
+      <div class="zoneLadder">
+        <div class="zl-row zf"><div><div class="zl-band">1–4</div><div class="zl-zone">기초</div></div><div class="zl-content"><div class="zc"><b>단문 SVO → 시제·상과 법조동사 → 수동·준동사 → 두 절</b> (등위 + 첫 종속: 관계절, that 명사절, 부사절).</div><span class="ze-eg">"The car that I bought is broken."</span></div></div>
+        <div class="zl-row zm"><div><div class="zl-band">5–6</div><div class="zl-zone">수능 일반</div></div><div class="zl-content"><div class="zc"><b>다중 종속</b> (중복합문, 축약·분사구문) <b>→ 가정법 진입</b> (조건문 0/1/2, 가정의 wish).</div><span class="ze-eg">"If I won, I would buy an island."</span></div></div>
+        <div class="zl-row ze"><div><div class="zl-band">7–8</div><div class="zl-zone">1등급</div></div><div class="zl-content"><div class="zc"><b>고급 가정</b> (3종·혼합 조건문, 완료 법조동사, 도치 조건문) <b>→ 특수 주절 구문</b> (부정 부사 도치, 분열문, 전치, 생략).</div><span class="ze-eg">"Had I studied…" · "Never have I seen this."</span></div></div>
+        <div class="zl-row za"><div><div class="zl-band">9–10</div><div class="zl-zone">수능 이상</div></div><div class="zl-content"><div class="zc"><b>내포 학술 구문</b> (명사화, 다중 내포, 병렬, 무거운 주어) <b>→ 특수 격식·희귀 구조</b> (격식 가정법, 양보 도치).</div><span class="ze-eg">"The claim that the data are flawed remains untested." · "I demand that he leave."</span></div></div>
+      </div>
+      <div style="font-size:8.5px;color:var(--faint);font-family:'JetBrains Mono','Noto Sans KR',monospace;margin-top:6px;line-height:1.5;">각 단계는 다음 단계에 도달하기 전에 학생이 반드시 갖춰야 하는 실제 구조에 연결되어 있습니다.</div>
+    </div>
+  </div>
+
+  <div class="signal">
+    <div class="sig-h">핵심 신호: 인식–산출 격차</div>
+    <div class="sig-b">이 도구 전체의 핵심입니다. 8단계를 읽지만 4단계를 쓰는 학생에게는 <b>4단계의 산출 격차</b>가 있습니다 — 자신이 만들지 못하는 구조를 알아보는 것입니다. 어떤 단일 숫자도 이를 말해 주지 못하지만, <b>거리</b>는 말해 줍니다.</div>
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · 어법</div>
+    <div class="meta">03 / 06 · 능력 요소 × 구문 난이도 단계</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 4 · READING COMPREHENSION
+     ============================================================ -->
+<section class="page d-read">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">영역 3 / 5</span>
+      <div class="eyebrow">독해</div>
+      <div class="ptitle">모든 문항 뒤의 <span class="sub">여섯 가지 능력</span></div>
+    </div>
+    <div class="pthesis">
+      문항 유형은 표면일 뿐, 실제로 측정되는 것은 더 적은 수의 <b>잠재 능력</b>입니다. 이 도구는 실제 유형을 출제하되 <b>그 문항이 요구하는 능력을 채점합니다</b> — 문제은행이 아니라 Q-행렬입니다.
+    </div>
+  </header>
+
+  <div class="bandkey">
+    <div class="bk-seg bk-found"><div class="bk-range">1 – 4</div><div class="bk-label">표면 · 가벼운 패러프레이즈 · 2–3개 결합</div></div>
+    <div class="bk-seg bk-mass"><div class="bk-range">5 – 6</div><div class="bk-label">지문 전체에서 결합</div></div>
+    <div class="bk-seg bk-elite"><div class="bk-range">7 – 8</div><div class="bk-label">지문 전체 통합 · 수능 1등급</div></div>
+    <div class="bk-seg bk-above"><div class="bk-range">9 – 10</div><div class="bk-label">판단 · 지문 간 · 상위 여지</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="seclabel">고유 형태 · 스카이라인 — 능력마다 다른 상한</div>
+    <div style="display:flex; gap:22px; align-items:flex-end; margin-top:8px;">
+      <div style="flex:1; position:relative; height:166px; border-bottom:2px solid var(--line); border-left:2px solid var(--line); display:flex; align-items:flex-end; justify-content:space-around; padding:0 6px;">
+        <!-- 수능 ceiling line at band 8 -->
+        <div style="position:absolute;left:0;right:0;bottom:124px;border-top:1px dashed var(--plum);opacity:.55;"></div>
+        <div style="position:absolute;right:4px;bottom:126px;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--plum);">수능 상한 · 8단계</div>
+        <!-- columns: height = band/10*155 -->
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:93px;background:var(--ink);opacity:.45;border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">사실적</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--mute);">상한 ~6</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:124px;background:var(--ink);opacity:.6;border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">대의</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--mute);">상한 ~8</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:155px;background:var(--ink);opacity:.92;border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">국소 추론</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--ink);">→ 9–10</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:124px;background:var(--ink);opacity:.6;border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">구조</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--mute);">상한 ~8</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:155px;background:var(--ink);opacity:.92;border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">전체 종합</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--ink);">→ 9–10</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;width:60px;">
+          <div style="width:34px;height:155px;background:var(--ink);border-radius:5px 5px 0 0;"></div>
+          <div style="font-size:8px;font-weight:600;color:var(--ink);margin-top:5px;text-align:center;line-height:1.15;">논증 평가</div>
+          <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7px;color:var(--ink);">→ 9–10</div>
+        </div>
+      </div>
+      <div style="flex:0 0 150px; background:var(--card); border:1px solid var(--accent-line); border-radius:8px; padding:9px 12px;">
+        <div style="font-family:Fraunces,'Noto Serif KR',serif;font-size:13px;font-weight:600;color:var(--ink);margin-bottom:4px;">최상위 격차</div>
+        <div style="font-size:10px;line-height:1.5;color:#36332b;"><b>사실적 이해와 대의에서 만점</b>을 받지만 논증 평가가 7단계에 그치는 학생은, 결함 없는 응시자이지만 아직 비판적 독자는 아닙니다. 그 격차는 점수로는 보이지 않으며, 특목고 · 논술을 위한 핵심입니다.</div>
+      </div>
+    </div>
+    <div class="hero-cap">여기서 난이도는 어휘와 구문을 일정하게 둔 채 <b>해당 능력을 발휘하는</b> 난이도입니다 — 어휘와 구문은 이미 어휘·어법 영역에서 채점되므로, 어려운 지문이 세 번 계산되지 않습니다. 최상단에 도달하는 능력은 셋뿐입니다: <b>국소 추론, 전체 종합, 논증 평가.</b></div>
+  </div>
+
+  <div class="detail">
+    <div class="detail-col">
+      <div class="seclabel">각 능력이 측정하는 것 · 그리고 그 상한</div>
+      <table class="opsTable">
+        <tr><td class="op-name"><span class="on">사실적</span><span class="ord">상한 ~6</span></td><td class="op-body"><div class="od">명시된 정보를 찾고 대조합니다.</div><span class="oe"><span class="k">유형</span> 일치 · 세부정보 · 도표 · 안내문</span></td></tr>
+        <tr><td class="op-name"><span class="on">대의</span><span class="ord">상한 ~8</span></td><td class="op-body"><div class="od">중심과 주변을 구분하고 핵심 주장을 찾습니다.</div><span class="oe"><span class="k">유형</span> 주제 · 요지 · 제목 · 주장 · 목적</span></td></tr>
+        <tr><td class="op-name"><span class="on">국소 추론</span><span class="ord">→ 9–10</span></td><td class="op-body"><div class="od">특정 지점의 함축 의미, 지칭, 함의.</div><span class="oe"><span class="k">유형</span> 함의 · 지칭 · 심경 · 문장 빈칸</span></td></tr>
+        <tr><td class="op-name"><span class="on">구조·응집</span><span class="ord">상한 ~8</span></td><td class="op-body"><div class="od">구성, 순서, 담화 기능 — 핵심 문장과 버려도 되는 문장.</div><span class="oe"><span class="k">유형</span> 순서 · 삽입 · 무관한 문장</span></td></tr>
+        <tr><td class="op-name"><span class="on">전체 종합</span><span class="ord">→ 9–10</span></td><td class="op-body"><div class="od">지문 전체에 걸쳐 통합합니다.</div><span class="oe"><span class="k">유형</span> 요약문 · 전체 빈칸 · 장문</span></td></tr>
+        <tr><td class="op-name"><span class="on">논증 평가</span><span class="ord">→ 9–10 · 정점</span></td><td class="op-body"><div class="od">전제, 약화, 결함, 평행 구조 — 비판적 독자의 정점.</div><span class="oe"><span class="k">유형</span> hard 빈칸 / 함의 · 논술</span></td></tr>
+      </table>
+    </div>
+    <div class="detail-col">
+      <div class="seclabel">유형을 출제하고 능력을 채점 · Q-행렬</div>
+      <table class="opsTable" style="font-size:9.5px;">
+        <tr><td style="padding:3px 8px 3px 0;border-bottom:1px solid var(--line);"><b style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:9px;color:var(--ink);">함의·함축 (3점)</b></td><td style="padding:3px 0;border-bottom:1px solid var(--line);color:#36332b;">→ 국소 추론 · 6–8단계</td></tr>
+        <tr><td style="padding:3px 8px 3px 0;"><b style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:9px;color:var(--ink);">요약문</b></td><td style="padding:3px 0;color:#36332b;">→ 전체 종합 · 4–7단계</td></tr>
+      </table>
+      <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;color:var(--mute);line-height:1.55;margin-top:7px;">전체 행렬은 모든 수능 · 내신 문항 유형을 잠재 능력과 목표 단계에 대응시킵니다. <span style="color:var(--faint)">두 개만 표시.</span></div>
+    </div>
+  </div>
+
+  <div class="signal">
+    <div class="sig-h">핵심 신호: 비판적 독자 격차</div>
+    <div class="sig-b">대다수 시장에서 핵심은 인식–산출 격차입니다. 최상위 집단에서는 이것입니다: 찾고 식별하는 과제는 모두 해내지만 <b>아직 논증을 판단하지는 못하는</b> 학생. 지금의 특목고·논술 준비로는 그 학생이 보이지 않습니다 — 이 도구는 바로 특목고 집단이 훈련하는 지점에서 그 격차를 숫자로 만듭니다 (AP / IB, IELTS 7.5+, GCSE AO5–6).</div>
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · 독해</div>
+    <div class="meta">04 / 06 · 잠재 능력 × 독해 요구 수준</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 5 · WRITING & CONSTRUCTION
+     ============================================================ -->
+<section class="page d-write">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">영역 4 / 5</span>
+      <div class="eyebrow">작문·구성</div>
+      <div class="ptitle">하나의 축, <span class="sub">두 가지 격차</span></div>
+    </div>
+    <div class="pthesis">
+      0–7단계 사다리는 작문 산출의 난이도 축입니다. 여기서 두 가지 격차가 드러납니다: 학생의 산출이 인식에 얼마나 뒤처지는지, 그리고 보조 없는 산출이 보조가 있는 산출에 얼마나 뒤처지는지.
+    </div>
+  </header>
+
+  <div class="bandkey">
+    <div class="bk-seg bk-found"><div class="bk-range">1 – 4</div><div class="bk-label">단어 → 문장 → 복문 · 서술형</div></div>
+    <div class="bk-seg bk-mass"><div class="bk-range">5 – 6</div><div class="bk-label">문단 → 다중 논증 · 수행평가</div></div>
+    <div class="bk-seg bk-elite"><div class="bk-range">7 – 8</div><div class="bk-label">에세이 → 평가 · 논술 · 8단계 AI 채점</div></div>
+    <div class="bk-seg bk-above"><div class="bk-range">9 – 10</div><div class="bk-label">지속적 · 출처 활용 수준 · AO5–6 · IELTS 8+</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="seclabel">고유 형태 · 하나의 사다리에서 드러나는 두 격차</div>
+    <div style="display:flex; gap:20px; margin-top:8px; align-items:stretch;">
+      <!-- the spine -->
+      <div style="flex:0 0 250px;">
+        <div style="display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--plum);margin-bottom:6px;letter-spacing:.04em;">▲ 인식은 여기까지 &nbsp;·&nbsp; 산출은 여기까지 ▼</div>
+        <div style="position:relative;padding-left:2px;">
+          <!-- rungs -->
+          <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;position:relative;">
+            <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--plum);color:var(--plum);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;z-index:1;">7</div>
+            <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">평가·분석 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">양보 후 반박 · 8단계</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+            <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--ink);color:var(--ink);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">6</div>
+            <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">에세이 구조 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">주장 / 본론 / 결론 · 7단계</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+            <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--ink);color:var(--ink);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">5</div>
+            <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">다중 논증 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">수행평가 · 6단계</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+            <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--ink);color:var(--ink);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">4</div>
+            <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">문단 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">하나의 논증 · 5단계</span></div>
+          </div>
+          <!-- 서술형 region wrapper -->
+          <div style="background:var(--accent-bg);border:1px dashed var(--accent-line);border-radius:7px;padding:4px 6px 1px;margin-top:1px;">
+            <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--plum);letter-spacing:.05em;margin-bottom:4px;">서술형 구간 · 2–4단계</div>
+            <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--plum);color:var(--plum);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">3</div>
+              <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">복문 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--plum);display:block;">주요 내신 서술형 상한 · 4단계</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--plum);color:var(--plum);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">2</div>
+              <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">수식 문장 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">수식 · 3단계</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;padding-bottom:2px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:#fff;border:2px solid var(--plum);color:var(--plum);font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;">1</div>
+              <div style="font-size:10px;color:var(--text);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">단문 SVO <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--mute);display:block;">서술형 진입 · 2단계</span></div>
+            </div>
+            <div style="display:grid;grid-template-columns:22px 1fr;gap:10px;">
+              <div style="width:22px;height:22px;border-radius:6px;background:#f3eef8;border:2px solid #cdbbdf;font-family:Fraunces,'Noto Serif KR',serif;font-weight:600;font-size:12px;display:flex;align-items:center;justify-content:center;color:#a98fc6;">0</div>
+              <div style="font-size:10px;color:var(--mute);font-family:Fraunces,'Noto Serif KR',serif;line-height:1.25;">단어 / 구 <span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:7.5px;color:var(--faint);display:block;">어휘 / 어법으로 연결 · 1단계</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- the two gaps -->
+      <div style="flex:1; display:flex; flex-direction:column; gap:11px;">
+        <div style="background:var(--card);border:1px solid var(--accent-line);border-radius:8px;padding:9px 13px;">
+          <div style="display:flex;align-items:baseline;gap:9px;"><span style="font-family:Fraunces,'Noto Serif KR',serif;font-size:26px;font-weight:600;color:var(--plum);line-height:1;">−4</span><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;color:var(--mute);letter-spacing:.03em;">인식 − 자유 산출</span></div>
+          <div style="font-family:Fraunces,'Noto Serif KR',serif;font-size:12px;color:var(--ink);font-weight:600;margin:5px 0 2px;">산출 격차</div>
+          <div style="font-size:10px;line-height:1.5;color:#36332b;">핵심 명제가 가장 뚜렷한 곳입니다. 암기형 학생은 인식은 7단계인데 자유 산출은 3단계입니다 — 좋은 글을 알아보는 데는 능숙하지만, 직접 만들어 내는 데서는 멈춥니다.</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--accent-line);border-radius:8px;padding:9px 13px;">
+          <div style="display:flex;align-items:baseline;gap:9px;"><span style="font-family:Fraunces,'Noto Serif KR',serif;font-size:26px;font-weight:600;color:var(--plum);line-height:1;">−2</span><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;color:var(--mute);letter-spacing:.03em;">보조 산출 − 자유 산출</span></div>
+          <div style="font-family:Fraunces,'Noto Serif KR',serif;font-size:12px;color:var(--ink);font-weight:600;margin:5px 0 2px;">보조 의존</div>
+          <div style="font-size:10px;line-height:1.5;color:#36332b;">작문에만 있는 격차입니다: 틀 채우기, 선지 고르기 같은 <b>보조가 있으면</b> 능숙하지만 <b>빈 페이지에서는 무너지는</b> 학생. 보조 산출과 자유 산출 사이의 거리가 그 측정값입니다.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail">
+    <div class="detail-col">
+      <div class="seclabel">각 능력 요소가 측정하는 것</div>
+      <table class="opsTable">
+        <tr><td class="op-name"><span class="on">인식</span><span class="ord">01 · 분류</span></td><td class="op-body"><div class="od">주어진 단위를 분류하고 그 질을 알아봅니다. 한국 학생이 높은 점수를 받는 영역입니다.</div><span class="oe"><span class="k">예</span> PLEW로 각 문장의 역할을 분류; 필요한 수식과 불필요한 수식 구분</span></td></tr>
+        <tr><td class="op-name"><span class="on">변형</span><span class="ord">02 · 재구성</span></td><td class="op-body"><div class="od">주어진 올바른 단위를 의미를 보존하며 재구성합니다.</div><span class="oe"><span class="k">예</span> 배열영작 (word ordering) · active ↔ passive</span></td></tr>
+        <tr><td class="op-name"><span class="on">보조 산출</span><span class="ord">03 · 보조 있음</span></td><td class="op-body"><div class="od"><b>보조가 있는</b> 상태로 산출합니다 — 틀 채우기, 선지 중 선택, 짝 문장.</div><span class="oe"><span class="k">예</span> 조건 영작 (힌트 제공)</span></td></tr>
+        <tr><td class="op-name"><span class="on">자유 산출</span><span class="ord">04 · 무보조</span></td><td class="op-body"><div class="od">한국어 문장에서 보조 없이 <b>맨손으로</b> 산출합니다. 산출 격차이자 진단의 중심축입니다.</div><span class="oe"><span class="k">예</span> 단문 영작 — 한국어에서 복문을 보조 없이</span></td></tr>
+        <tr><td class="op-name"><span class="on">개선</span><span class="ord">05 · 수정</span></td><td class="op-body"><div class="od"><b>수사적</b> 질을 위해 초고를 다듬습니다 — 간결성, 강조, 응집, 약함→강함.</div><span class="oe"><span class="k">예</span> 문장을 간결하게; 약한 논증을 강화</span></td></tr>
+      </table>
+      <div style="margin-top:11px; background:var(--accent-bg); border:1px solid var(--accent-line); border-radius:7px; padding:7px 11px;">
+        <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--plum);margin-bottom:3px;">PLEW · 채점 렌즈이지 별도 항목이 아님</div>
+        <div style="font-size:9.5px;line-height:1.5;color:#36332b;">모든 문장을 역할별로 분류하면 — <b>목적 · 논리 · 근거 · 약점</b> — 논증 작문을 <b>7단계까지 결정론적으로 채점</b>할 수 있습니다; AI 채점은 8단계(평가)에만 적용됩니다.</div>
+      </div>
+    </div>
+    <div class="detail-col wide">
+      <div class="seclabel">각 수준에 속하는 것 · 단계 사다리와 세 가지 작문 시험 층위</div>
+      <div class="zoneLadder">
+        <div class="zl-row zf"><div><div class="zl-band">1–4</div><div class="zl-zone">서술형 · 지필</div></div><div class="zl-content"><div class="zc"><b>0–3단계 · 단어 → 단문 SVO → 수식 문장 → 복문.</b> 주요 내신 서술형은 이 단계들에서 <b>세 능력 요소 행</b>에 걸쳐 있습니다: 배열영작 → 변형, 조건 영작 → 보조 산출, 단문 영작 → 자유 산출.</div><span class="ze-eg">진단 가치는 같은 단계에서 그 행들 사이의 격차에 있습니다</span></div></div>
+        <div class="zl-row zm"><div><div class="zl-band">5–6</div><div class="zl-zone">수행평가</div></div><div class="zl-content"><div class="zc"><b>4–5단계 · 문단(하나의 논증) → 다중 논증.</b> 서술형의 문단형 확장(학교에서 늘고 있음)과 수행평가 작문.</div></div></div>
+        <div class="zl-row ze"><div><div class="zl-band">7–8</div><div class="zl-zone">논술 · 에세이</div></div><div class="zl-content"><div class="zc"><b>6–7단계 · 에세이 구조 → 평가·분석</b> (양보 후 반박). PLEW 결정론적 채점의 상한은 7단계이며, AI 채점은 8단계부터 시작됩니다.</div></div></div>
+        <div class="zl-row za"><div><div class="zl-band">9–10</div><div class="zl-zone">최상위</div></div><div class="zl-content"><div class="zc"><b>지속적 평가 논증 → 출처를 활용하는 독자적 학술 논증.</b> GCSE AO5 / AO6 방식으로 채점; IELTS 8+ / AP / IB.</div><span class="ze-eg">독해의 논증 평가 × 9–10과 만납니다 — 두 영역은 서로 부합하며 중복 계산되지 않습니다</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="signal">
+    <div class="sig-h">핵심 신호: 작문의 두 격차</div>
+    <div class="sig-b">한국 학생은 인식에는 과도하게, 산출에는 부족하게 훈련되어 있습니다 — 그래서 <b>산출 격차</b>가 핵심 명제이며, 작문에서 가장 뚜렷합니다. <b>보조 의존</b>은 작문에만 있는 두 번째 격차로, 보조가 있는 산출과 보조 없는 산출 사이의 거리입니다. 두 가지 모두 능력 요소 × 단계 프로파일에서 곧바로 읽히며, 서술형은 2–5단계의 자유 산출에 대응됩니다.</div>
+  </div>
+  <div class="ground">
+    <b>근거 —</b> <span class="tag">출처</span> PLEW는 고전적인 옥스퍼드 작문 기법에 기반하며, 그 개념들(인식 대 산출, 보조 / 보조 축소)은 정립된 것입니다. &nbsp; <span class="tag auth">자체 설계</span> 0–7단계 축, 능력 요소 구분, 서술형의 구간 대응, 7단계까지의 결정론적 채점 설계.
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · 작문·구성</div>
+    <div class="meta">05 / 06 · 능력 요소 × 단계 사다리 범위</div>
+  </footer>
+</section>
+
+<!-- ============================================================
+     PAGE 6 · EXAM TECHNIQUE
+     ============================================================ -->
+<section class="page d-exam">
+  <header class="phead">
+    <div class="brand">
+      <span class="pnum">영역 5 / 5</span>
+      <div class="eyebrow">시험 기술</div>
+      <div class="ptitle">같은 오답도 <span class="sub">의미가 다릅니다</span></div>
+    </div>
+    <div class="pthesis">
+      기술은 능력 점수에 더해지는 것이 아니라, 그 점수보다 <b>먼저 작동하는 관문</b>입니다. 같은 실수라도 어떻게 발생했는지에 따라 지식의 공백일 수도, 시간 운용의 실패일 수도, 습관일 수도 있습니다. 이 관문이 그것을 가려냅니다.
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="seclabel">고유 형태 · 판별 관문 — 오답마다 순서대로 분류</div>
+    <div style="display:flex; gap:10px; align-items:stretch; margin-top:8px;">
+      <div style="flex:0 0 116px; background:var(--garnet); border-radius:9px; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px 10px; color:#fff;">
+        <div style="font-family:Fraunces,'Noto Serif KR',serif;font-size:16px;font-weight:600;line-height:1.1;text-align:center;">오답<br>하나</div>
+        <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;opacity:.85;margin-top:8px;text-align:center;letter-spacing:.04em;">위에서부터 판별 →</div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:14px;">
+        <!-- step 1 -->
+        <div style="display:flex;gap:9px;align-items:stretch;">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;"><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.06em;">1 · 미도달 또는 급하게?</span><div style="font-size:10px;color:#36332b;line-height:1.35;margin-top:1px;">예상 시간보다 훨씬 빨리 답했거나 끝까지 못 풂</div></div>
+          <div style="flex:0 0 168px;background:var(--z-found);border-radius:7px;padding:7px 11px;display:flex;flex-direction:column;justify-content:center;"><b style="font-size:10.5px;color:var(--ink);">→ 시간 운용</b><span style="font-size:9px;color:var(--mute);line-height:1.3;">이 문항의 능력 판독은 <b>무효</b></span></div>
+        </div>
+        <!-- step 2 -->
+        <div style="display:flex;gap:9px;align-items:stretch;">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;"><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.06em;">2 · 능력 ≥ 요구 · 잘 빠지는 함정?</span><div style="font-size:10px;color:#36332b;line-height:1.35;margin-top:1px;">유형을 가리지 않고 반복해 빠지는 함정 유형의 선지를 고름</div></div>
+          <div style="flex:0 0 168px;background:var(--z-found);border-radius:7px;padding:7px 11px;display:flex;flex-direction:column;justify-content:center;"><b style="font-size:10.5px;color:var(--ink);">→ 함정 내성</b><span style="font-size:9px;color:var(--mute);line-height:1.3;">기술 문제; 능력 점수는 <b>보존</b></span></div>
+        </div>
+        <!-- step 3 -->
+        <div style="display:flex;gap:9px;align-items:stretch;">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;"><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.06em;">3 · 능력 ≥ 요구 · 정상 시간 · 습관 없음?</span><div style="font-size:10px;color:#36332b;line-height:1.35;margin-top:1px;">알고 있었고, 시간도 충분했고, 반복 패턴도 없음</div></div>
+          <div style="flex:0 0 168px;background:var(--z-found);border-radius:7px;padding:7px 11px;display:flex;flex-direction:column;justify-content:center;"><b style="font-size:10.5px;color:var(--ink);">→ 단순 실수</b><span style="font-size:9px;color:var(--mute);line-height:1.3;">부주의; 능력 공백 아님</span></div>
+        </div>
+        <!-- step 4 highlighted -->
+        <div style="display:flex;gap:9px;align-items:stretch;">
+          <div style="flex:1;background:var(--accent-bg);border:1px solid var(--accent-line);border-radius:7px;padding:9px 11px;"><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.06em;">4 · 능력 &lt; 요구</span><div style="font-size:10px;color:#36332b;line-height:1.35;margin-top:1px;">상한이 실제로 문항에 미치지 못함</div></div>
+          <div style="flex:0 0 168px;background:var(--garnet);border-radius:7px;padding:7px 11px;display:flex;flex-direction:column;justify-content:center;"><b style="font-size:10.5px;color:#fff;">→ 능력 공백</b><span style="font-size:9px;color:#f3d9df;line-height:1.3;">진짜 진단 · 행렬의 칸을 지정</span></div>
+        </div>
+        <!-- step 5 -->
+        <div style="display:flex;gap:9px;align-items:stretch;">
+          <div style="flex:1;background:var(--card);border:1px solid var(--line);border-radius:7px;padding:9px 11px;"><span style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.06em;">5 · 정답 · 그러나 능력 &lt; 요구</span><div style="font-size:10px;color:#36332b;line-height:1.35;margin-top:1px;">맞혔지만, 프로파일상 맞힐 수 없는 문항</div></div>
+          <div style="flex:0 0 168px;background:var(--z-found);border-radius:7px;padding:7px 11px;display:flex;flex-direction:column;justify-content:center;"><b style="font-size:10.5px;color:var(--ink);">→ 전략 / 추측</b><span style="font-size:9px;color:var(--mute);line-height:1.3;">표시; 능력으로 인정하지 않음</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="detail">
+    <div class="detail-col">
+      <div class="seclabel">네 가지 차원 · 신호 → 관문 → 리포트</div>
+      <table class="opsTable">
+        <tr><td class="op-name"><span class="on">시간 운용</span><span class="ord">전 범위</span></td><td class="op-body"><div class="od">문항별 소요 시간 대 예상 시간; 못 푼 문항; 오래 끌다 급해지는 패턴.</div><span class="oe"><span class="k">리포트</span> "3점 빈칸은 2:30에 넘기기; 어휘에 ~1분"</span></td></tr>
+        <tr><td class="op-name"><span class="on">함정 내성</span><span class="ord">전 범위</span></td><td class="op-body"><div class="od">12개 함정 유형 각각에 대한 유형 교차 취약성 — 같은 함정이 유형을 가리지 않고 학생을 잡아내는가?</div><span class="oe"><span class="k">리포트</span> 유형별 취약성 — 점검 가능한 습관</span></td></tr>
+        <tr><td class="op-name"><span class="on">탐색 효율</span><span class="ord">상한 ~6</span></td><td class="op-body"><div class="od">찾기 유형 문항에서의 위치 정확도와 소요 시간. 잘못 훑는 것은 기술 문제이지 사실적 이해 능력의 공백이 아닙니다. <span class="floored">찾기 과제는 6단계 초과 없음</span></div></td></tr>
+        <tr><td class="op-name"><span class="on">전략 / 경로</span><span class="ord">전 범위</span></td><td class="op-body"><div class="od">유형별 결과; 소거법과 역방향 구성의 사용. 경로를 가리지 않으며 — <b>잘 통하는 독자적 방법에 불이익을 주지 않습니다.</b></div></td></tr>
+      </table>
+    </div>
+    <div class="detail-col">
+      <div class="seclabel">함정 유형 · "왜"의 어휘</div>
+      <div style="font-size:9.5px; line-height:1.5;">
+        <div style="margin-bottom:7px;"><b style="color:var(--ink);">단어 반복</b> — 선지가 지문의 단어를 그대로 쓰고, 정답은 바꿔 표현함. <span style="color:var(--faint)">Q21 / 31 / 33 / 34</span></div>
+        <div style="margin-bottom:7px;"><b style="color:var(--ink);">지나친 단정</b> — 지문이 도달하지 않는 과도한 단정.</div>
+        <div style="margin-bottom:7px;"><b style="color:var(--ink);">범위 축소</b> — 세부 논점을 핵심으로 격상함.</div>
+        <div style="margin-bottom:7px;"><b style="color:var(--ink);">정반대 / 직접 부정</b> — 지문이 말한 관계를 뒤집음.</div>
+      </div>
+      <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8.5px;color:var(--mute);line-height:1.55;margin-top:2px;margin-bottom:9px;">엔진은 12개 함정 유형을 각각의 탐지 단서와 함께 갖추고 있습니다. <span style="color:var(--faint)">네 개만 표시.</span></div>
+      <div style="margin-top:9px; background:var(--card); border:1px solid var(--accent-line); border-left:3px solid var(--garnet); border-radius:7px; padding:7px 11px;">
+        <div style="font-family:'JetBrains Mono','Noto Sans KR',monospace;font-size:8px;color:var(--garnet);letter-spacing:.05em;margin-bottom:3px;">문항별 "왜"</div>
+        <div style="font-size:9.5px;line-height:1.5;color:#36332b;">"Q33: 지문의 <b>'tunnel'</b>이 떠올라 ②를 골랐습니다(단어 반복); 능력 모델은 이 내용을 알고 있었음을 보여 줍니다 → 지식의 공백이 아니라 <b>점검 가능한 습관</b>입니다." 함정 유형이 <i>곧</i> 심리적 원인입니다.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="pfoot">
+    <div><b>ExamRizz</b> — 진단 루브릭 · 시험 기술</div>
+    <div class="meta">06 / 06 · 판별 관문 + 함정 분류</div>
+  </footer>
+</section>
+
+</body>
+</html>
