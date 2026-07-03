@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Examrizz — 조건 기반 영어 작문 커리큘럼</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root{
+    --ink:#22405f; --teal:#1f7a6b; --amber:#c8821a; --plum:#7a5298;
+    --paper:#fbfaf7; --card:#ffffff; --line:#e7e2d8; --text:#1f1d17; --mute:#6c665b; --faint:#a8a092;
+    --route:#c3cedb;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:#ece8df;
+    font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding:28px 14px;
+  }
+
+  .page{
+    width:794px; min-height:1123px; margin:0 auto 26px;
+    background:var(--paper);
+    box-shadow:0 10px 50px rgba(40,32,20,.16);
+    padding:38px 40px 30px;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- header ---------- */
+  .head{display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--ink); padding-bottom:13px;}
+  .brand .eyebrow{font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--amber); font-weight:500;}
+  .brand h1{font-family:Fraunces,serif; font-weight:600; font-size:33px; line-height:1; margin:5px 0 0; color:var(--ink); letter-spacing:-.015em;}
+  .head .thesis{max-width:330px; text-align:right; font-size:11.5px; line-height:1.5; color:var(--mute);}
+  .head .thesis b{color:var(--text); font-weight:600;}
+
+  /* ---------- main two-column ---------- */
+  .main{display:flex; gap:30px; margin-top:20px;}
+  .col-left{width:352px; flex:0 0 352px;}
+  .col-right{flex:1; min-width:0;}
+
+  .secLabel{font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint); font-weight:500; margin-bottom:12px;}
+
+  /* ---------- the climbing spine (hero) ---------- */
+  .spine{position:relative; padding-left:4px;}
+  .rung{position:relative; display:grid; grid-template-columns:30px 1fr; gap:13px; padding:0 0 12px;}
+  .rung:last-child{padding-bottom:0;}
+  .rung::before{content:""; position:absolute; left:14px; top:24px; bottom:-1px; width:2px; background:var(--route);}
+  .rung:last-child::before{display:none;}
+  .node{
+    width:30px; height:30px; border-radius:8px; background:var(--card); border:2px solid var(--ink);
+    color:var(--ink); font-family:Fraunces,serif; font-weight:600; font-size:14px;
+    display:flex; align-items:center; justify-content:center; position:relative; z-index:1;
+  }
+  .rung .stage{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--mute); margin:1px 0 3px; display:flex; gap:7px; align-items:center;}
+  .rung .grow{font-family:Fraunces,serif; color:var(--text); line-height:1.32;}
+  .tag{font-family:'JetBrains Mono',monospace; font-size:8.5px; font-weight:500; letter-spacing:.02em; padding:1px 6px; border-radius:4px; text-transform:none;}
+  .tag.amber{background:#fdf4e6; border:1px solid #ecdcb8; color:#7a5a1e;}
+  .tag.plum{background:#f3eef8; border:1px solid #ddd0ea; color:#5e3f80;}
+
+  .g0{font-size:13px;} .g1{font-size:13px;} .g2{font-size:13.5px;} .g3{font-size:14px;}
+  .g4{font-size:14px;} .g5{font-size:14.5px;} .g6{font-size:15px;} .g7{font-size:15px;}
+  .node.s7{border-color:var(--plum); color:var(--plum);}
+  .node.s4{border-color:var(--amber); color:var(--amber);}
+  .node.ceil{box-shadow:0 0 0 3px #f3eef8;}
+
+  .spine-foot{margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:10px; line-height:1.55; color:var(--mute);}
+  .spine-foot b{color:var(--plum); font-weight:600;}
+
+  /* ---------- right column blocks ---------- */
+  .block{margin-bottom:16px;}
+  .block h3{font-family:Fraunces,serif; font-weight:600; font-size:16px; color:var(--ink); margin:0 0 8px;}
+  .block p{font-size:11.7px; line-height:1.6; color:#36332b; margin:0 0 8px;}
+  .block p:last-child{margin-bottom:0;}
+  .block p .k{color:var(--ink); font-weight:600;}
+  .plew{display:flex; gap:6px; margin:3px 0 9px; flex-wrap:wrap;}
+  .plew span{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.04em; padding:2px 7px; border-radius:5px; background:#eef3f1; border:1px solid #d6e3de; color:var(--teal); font-weight:500;}
+
+  .arc{display:flex; align-items:center; gap:6px; margin:0 0 10px; font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:500;}
+  .arc .s{color:var(--ink);} .arc .j{color:var(--plum);} .arc .d{color:var(--amber);} .arc .ar{color:var(--faint);}
+
+  /* ---------- specimen (endpoint proof) ---------- */
+  .specimen{margin-top:auto; padding-top:18px;}
+  .specWrap{border:1px solid var(--line); border-left:4px solid var(--plum); background:var(--card); border-radius:0 10px 10px 0; padding:16px 20px 15px;}
+  .specWrap .stamp{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--plum); font-weight:500; margin-bottom:9px; display:flex; align-items:center; gap:9px;}
+  .specWrap .stamp .num{color:var(--faint);}
+  .specWrap .body{font-family:Fraunces,serif; font-size:12.5px; line-height:1.62; color:#2a2620;}
+  .specWrap .body .e{color:var(--faint);}
+  .specCap{margin-top:10px; font-size:10.5px; line-height:1.5; color:var(--mute);}
+  .specCap b{color:var(--text); font-weight:600;}
+
+  .pageFoot{display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:11px; border-top:2px solid var(--ink); font-size:10.5px; color:var(--mute);}
+  .pageFoot b{color:var(--ink);}
+  .pageFoot .forms{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.02em;}
+
+  /* ============ PAGE 2 — textbook samples ============ */
+  .bookIntro{display:flex; justify-content:space-between; align-items:flex-end; border-bottom:2px solid var(--ink); padding-bottom:11px; margin-bottom:4px;}
+  .bookIntro .t{font-family:Fraunces,serif; font-weight:600; font-size:20px; color:var(--ink);}
+  .bookIntro .s{font-size:11px; color:var(--mute); max-width:330px; text-align:right; line-height:1.5;}
+  .bookIntro .s b{color:var(--text); font-weight:600;}
+
+  .sample{border:1px solid var(--line); border-radius:11px; overflow:hidden; margin-top:20px; background:var(--card);}
+  .sBand{display:flex; justify-content:space-between; align-items:center; padding:9px 16px; background:var(--ink); color:#fff;}
+  .sBand .lv{font-family:Fraunces,serif; font-weight:600; font-size:14.5px;}
+  .sBand .meta{font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:#bcd0e4;}
+  .sBody{padding:15px 18px 17px;}
+
+  .ex{display:grid; grid-template-columns:74px 1fr; gap:12px; padding:9px 0; border-top:1px dashed var(--line);}
+  .ex:first-child{border-top:none; padding-top:2px;}
+  .ex .lab{font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:.1em; text-transform:uppercase; font-weight:500; padding-top:2px;}
+  .ex .lab.see{color:var(--teal);} .ex .lab.judge{color:var(--plum);} .ex .lab.write{color:var(--amber);} .ex .lab.teach{color:var(--ink);}
+  .ex .c{font-size:11.7px; line-height:1.55; color:#36332b;}
+  .ex .c .model{font-family:Fraunces,serif; font-size:13px; color:#2a2620; background:#f6f4ef; border-radius:7px; padding:8px 11px; line-height:1.45;}
+  .ex .c b{color:var(--ink); font-weight:600;}
+
+  .judgeRow{display:flex; flex-direction:column; gap:6px;}
+  .jOpt{display:flex; align-items:flex-start; gap:9px; font-family:Fraunces,serif; font-size:12.5px; line-height:1.4; color:#3a352d;}
+  .jOpt .box{width:15px; height:15px; border:1.5px solid var(--faint); border-radius:4px; flex:none; margin-top:2px; display:grid; place-items:center; font-size:11px; color:#fff;}
+  .jOpt.right .box{background:var(--teal); border-color:var(--teal);}
+  .jOpt.right{color:#1f1d17;}
+  .jOpt .why{display:block; font-family:Inter,sans-serif; font-size:10px; color:var(--mute); margin-top:2px;}
+
+  .cond{border:1.4px solid #ecdcb8; background:#fdf8ee; border-radius:8px; padding:9px 12px; margin-bottom:9px;}
+  .cond .ct{font-family:'JetBrains Mono',monospace; font-size:8.5px; letter-spacing:.12em; text-transform:uppercase; color:#9a751f; font-weight:500; margin-bottom:5px;}
+  .cond .chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .cond .chip{font-size:10.5px; font-weight:600; color:#7a5a1e; background:#fff; border:1px solid #ecdcb8; border-radius:5px; padding:2px 8px;}
+  .rule{height:14px; border-bottom:1.4px solid #d9d3c6; margin:0 0 6px;}
+  .modelAns{font-family:Fraunces,serif; font-size:12px; line-height:1.45; color:var(--teal); }
+  .modelAns .lab{font-family:'JetBrains Mono',monospace; font-size:8px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint); display:block; margin-bottom:2px;}
+  .tip{margin-top:10px; font-size:10.5px; line-height:1.5; color:var(--mute); border-top:1px dashed var(--line); padding-top:8px;}
+  .tip b{color:var(--amber);} .tip.link b{color:var(--plum);}
+
+  @media print{
+    body{background:#fff; padding:0;}
+    .page{box-shadow:none; width:auto; min-height:auto; margin:0; page-break-after:always;}
+    .page:last-child{page-break-after:auto;}
+    @page{size:A4; margin:12mm;}
+  }
+  @media (max-width:840px){
+    .page{width:100%; min-height:auto; padding:26px 20px;}
+    .main{flex-direction:column; gap:24px;}
+    .col-left{width:auto; flex:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ====================== PAGE 1 ====================== -->
+<div class="page">
+
+  <header class="head">
+    <div class="brand">
+      <div class="eyebrow">조건 기반 영어 작문 커리큘럼</div>
+      <h1>Examrizz</h1>
+    </div>
+  </header>
+
+  <div class="main">
+
+    <!-- HERO: one idea, built up stage by stage -->
+    <div class="col-left">
+      <div class="secLabel">하나의 생각이 단계마다 자라납니다</div>
+      <div class="spine">
+
+        <div class="rung"><div class="node">0</div>
+          <div><div class="stage">첫 단어</div><div class="grow g0">Phones.</div></div></div>
+
+        <div class="rung"><div class="node">1</div>
+          <div><div class="stage">정확한 한 문장</div><div class="grow g1">Phones distract students in class.</div></div></div>
+
+        <div class="rung"><div class="node">2</div>
+          <div><div class="stage">묘사하기</div><div class="grow g2">Phones quietly pull students’ attention from the lesson.</div></div></div>
+
+        <div class="rung"><div class="node">3</div>
+          <div><div class="stage">생각 연결하기</div><div class="grow g3">Phones distract students because the notifications never stop.</div></div></div>
+
+        <div class="rung"><div class="node s4">4</div>
+          <div><div class="stage">규칙에 맞춰 쓰기 <span class="tag amber">조건 영작</span></div><div class="grow g4">Students can’t concentrate because of constant notifications.</div></div></div>
+
+        <div class="rung"><div class="node ceil">5</div>
+          <div><div class="stage">근거와 증거</div><div class="grow g5">In one study, students who silenced their phones scored higher.</div></div></div>
+
+        <div class="rung"><div class="node ceil">6</div>
+          <div><div class="stage">논증 세우기</div><div class="grow g6">Schools should ban phones in lessons: constant notifications make real concentration almost impossible.</div></div></div>
+
+        <div class="rung"><div class="node s7 ceil">7</div>
+          <div><div class="stage">비교·판단 <span class="tag plum">평가</span></div><div class="grow g7">Phones are useful tools — but they can be handed back the moment a lesson needs them.</div></div></div>
+
+      </div>
+
+      <div class="spine-foot">
+        같은 한 문장이 단계를 오릅니다. <b>5–7단계가 최상위권 구간</b>이며, 7단계에서 나오는 글이 바로 오른쪽에 보이는 단락입니다.
+      </div>
+    </div>
+
+    <!-- RIGHT: how it works -->
+    <div class="col-right">
+
+      <div class="block">
+        <h3>이렇게 가르칩니다</h3>
+        <p>겉으로는 학생들이 이미 익숙한 방식 그대로입니다. 주제와 조건이 주어지고 한 문장을 써냅니다 — 모든 시험에서 마주하는 <span class="k">조건 영작 · 서술형</span> 형식입니다. 새로 배워야 할 학습 방식이 없습니다.</p>
+        <p>그 안에서는 모든 과제가 <span class="k">PLEW</span>와, 주장을 확정하기 전에 따져 보는 옥스퍼드식 사고 습관으로 설계됩니다. 학생은 이 틀을 따로 공부하지 않습니다 — 한 번에 하나의 조건씩 직접 쓰며 자연스럽게 익혀 나갑니다.</p>
+        <div class="plew"><span>Purpose · 목적</span><span>Logic · 논리</span><span>Evidence · 근거</span><span>Weakness · 약점</span></div>
+        <p>모든 기술은 세 단계로 익힙니다:</p>
+        <div class="arc"><span class="s">보기</span><span class="ar">→</span><span class="j">판단</span><span class="ar">→</span><span class="d">쓰기</span></div>
+        <p>표현을 알아보고, 더 나은 글과 부족한 글을 가려내고, 직접 써냅니다. 단계가 오를수록 조건은 더 까다로워집니다 — 정확한 한 문장에서 논리적으로 연결된 문장으로, 근거로 뒷받침된 주제문으로, 양면을 따져 본 결론으로. 정상에 이르면 학생은 그동안 <i>읽기만</i> 하던 수준의 글을 스스로 써냅니다.</p>
+        <p>인식이 먼저, 산출이 핵심입니다 — 그리고 <span class="k">통제된 모든 단계는 스스로 채점됩니다</span>. 교사도 AI도 필요하지 않습니다.</p>
+      </div>
+
+      <!-- ENDPOINT PROOF -->
+      <div class="specimen">
+        <div class="secLabel">이 과정이 도달하는 글</div>
+        <div class="specWrap">
+          <div class="stamp">학생 작문 <span class="num">· 7단계 결과물</span></div>
+          <div class="body">
+            Human immigration started from the Upper Paleolithic for abundant food and suitable climate. In the modern period, human immigration was primarily within and between sovereign states. From the perspective of neoclassical economics, modern immigration is caused by geographical distinctions in work supply and demand. <span class="e">[…]</span> According to a microeconomic model of individual choice, certain rational individuals make the decision to migrate on the basis of the costs and the profit analysis connected to moving (Wickramasinghe and Wimalaratana, 2016).
+          </div>
+        </div>
+        <div class="specCap"><b>존 로크 에세이 대회 수상작</b>의 서론입니다 — 이 글쓰기 커리큘럼을 1년 미만 학습한 16세 학생이 작성했습니다.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="pageFoot">
+    <div><b>Examrizz</b> — by Stream Learning · 스트림 러닝</div>
+    <div class="forms">하나의 커리큘럼 · 앱과 교재로 구현 · 라이선스 가능한 엔진</div>
+  </footer>
+
+</div>
+
+<!-- ====================== PAGE 2 — textbook samples ====================== -->
+<div class="page">
+
+  <div class="bookIntro">
+    <div class="t">Student Book</div>
+  </div>
+
+  <!-- MIDDLE SCHOOL -->
+  <div class="sample">
+    <div class="sBand"><div class="lv">중학교 · 조건에 맞춰 영작</div><div class="meta">3–4단계 · 양보 후 연결</div></div>
+    <div class="sBody">
+
+      <div class="ex">
+        <div class="lab teach">개념</div>
+        <div class="c">이미 이유가 담긴 정확한 한 문장은 쓸 수 있습니다. 한 단계 위는, 서로 맞서는 두 생각을 한 문장에 담는 것입니다 — 작은 점을 먼저 인정하고, 그다음 하려는 말을 더 강하게 내세웁니다. 연결어가 그 논리를 만듭니다. 아래 문장을 따라 써 보세요.</div>
+      </div>
+
+      <div class="ex">
+        <div class="lab see">예시</div>
+        <div class="c"><div class="model"><b>Although</b> phones can be useful, they pull students’ attention from the lesson.</div></div>
+      </div>
+
+      <div class="ex">
+        <div class="lab judge">판단</div>
+        <div class="c"><div class="judgeRow">
+          <div class="jOpt"><span class="box"></span><span>Phones are useful, but they also distract students.<span class="why">‘But’은 비슷한 두 사실을 그냥 나란히 붙일 뿐, 어느 쪽도 부각되지 않습니다.</span></span></div>
+          <div class="jOpt right"><span class="box">✓</span><span>Although phones can be useful, they pull attention from the lesson.<span class="why">작은 점을 먼저 두기에, 진짜 하고 싶은 말이 마지막에 가장 강하게 옵니다.</span></span></div>
+        </div></div>
+      </div>
+
+      <div class="ex">
+        <div class="lab write">영작</div>
+        <div class="c">
+          <div class="cond"><div class="ct">조건 · 규칙에 맞춰 영작</div><div class="chips"><span class="chip">‘although’ 사용</span><span class="chip">한 문장</span><span class="chip">양보 먼저, 주장은 그다음</span><span class="chip">12단어 이내</span></div></div>
+          <div class="rule"></div><div class="rule"></div>
+          <div class="modelAns"><span class="lab">예시 답안</span>Although buses are cheap, they are too slow for daily travel.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- HIGH SCHOOL -->
+  <div class="sample">
+    <div class="sBand"><div class="lv">고등학교 · 논증 세우기</div><div class="meta">6–7단계 · PLEW</div></div>
+    <div class="sBody">
+
+      <div class="ex">
+        <div class="lab teach">개념</div>
+        <div class="c">PLEW를 기억하세요. 점수를 받는 논증에는 하려는 주장(<b>Purpose · 목적</b>), 그것을 믿게 만드는 근거(<b>Logic · 논리</b>), 이를 뒷받침하는 증거(<b>Evidence · 증거</b>), 그리고 약점에 대한 솔직한 대응(<b>Weakness · 약점</b>)이 필요합니다. 아래 단락을 따라 써 보세요 — 주장, 이유, 증거, 그리고 반론을 인정한 뒤 내 편으로 돌려놓기.</div>
+      </div>
+
+      <div class="ex">
+        <div class="lab see">예시</div>
+        <div class="c"><div class="model">Schools should limit phones in lessons. Constant notifications break concentration, and one study found students who silenced them scored higher. Phones are useful — <b>but they can be handed back the moment a lesson needs them.</b></div></div>
+      </div>
+
+      <div class="ex">
+        <div class="lab judge">판단</div>
+        <div class="c"><div class="judgeRow">
+          <div class="jOpt"><span class="box"></span><span>Social media affects many people in different ways.<span class="why">맞는 말이라 아무도 반박하지 않습니다 — 증명할 것도, 더 나아갈 곳도 없습니다.</span></span></div>
+          <div class="jOpt right"><span class="box">✓</span><span>Social media does more harm than good and should be limited.<span class="why">옹호하거나 반박할 수 있는 입장을 취합니다 — 글을 쌓아 올릴 수 있는 주제문입니다.</span></span></div>
+        </div></div>
+      </div>
+
+      <div class="ex">
+        <div class="lab write">영작</div>
+        <div class="c">
+          <div class="cond"><div class="ct">조건 · 규칙에 맞춰 영작</div><div class="chips"><span class="chip">분명하고 논쟁 가능한 입장</span><span class="chip">근거 1개</span><span class="chip">약점 1개 언급</span><span class="chip">40–60단어</span></div></div>
+          <div class="rule"></div><div class="rule"></div><div class="rule"></div>
+          <div class="modelAns"><span class="lab">예시 답안</span>Homework should be cut, not scrapped. Long assignments crowd out sleep, and rested students learn faster. Some practice still matters — but ten focused minutes does more than an hour of busywork.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer class="pageFoot">
+    <div><b>Examrizz</b> — by Stream Learning · 스트림 러닝</div>
+    <div class="forms">교재 문구는 예시이며, 최종 문구는 추후 확정합니다</div>
+  </footer>
+
+</div>
+
+</body>
+</html>

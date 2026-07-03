@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>문항 엔진 · 데모</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A4E; --navy-soft:#2C3E66;
+    --cream:#F7F3EC; --cream-alt:#FBF8F2; --white:#FFFFFF;
+    --green:#2E7D5B; --green-bg:rgba(46,125,91,.10);
+    --amber:#C58A1D; --amber-bg:rgba(197,138,29,.12);
+    --red:#B23A3A; --red-bg:rgba(178,58,58,.10);
+    --grey:#6E6E6E; --grey-line:#E5E2DC; --grey-soft:#EDEAE3;
+    --burgundy:#7A2E2E;
+    --f1:#0E8276; --f1-bg:rgba(14,130,118,.10);
+    --lx:#9B3D7A; --lx-bg:rgba(155,61,122,.10);
+    --f2:#3A4FB0; --f2-bg:rgba(58,79,176,.10);
+    --plP:#1B2A4E; --plP-bg:rgba(27,42,78,.10);
+    --plL:#7A2E2E; --plL-bg:rgba(122,46,46,.10);
+    --plE:#2E7D5B; --plE-bg:rgba(46,125,91,.12);
+    --plW:#C58A1D; --plW-bg:rgba(197,138,29,.14);
+    --mint:#ECF4F0; --mint-2:#E3EFEA;
+    --font-serif:'Noto Serif KR','Nanum Myeongjo',Georgia,'Apple SD Gothic Neo',serif;
+    --font-sans:'Noto Sans KR',-apple-system,'Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;
+    --font-mono:'IBM Plex Mono','SF Mono',Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; height:100%;}
+  body{background:var(--cream); color:var(--navy); font-family:var(--font-sans); font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  .kr,.passage,.serif{word-break:keep-all; overflow-wrap:break-word;}
+  .mono{font-family:var(--font-mono);}
+  h1,h2,h3,h4{margin:0; font-weight:700; word-break:keep-all;}
+  p{margin:0;} a{color:inherit;}
+  button{font-family:var(--font-sans); cursor:pointer;}
+  :focus-visible{outline:2px solid var(--f1); outline-offset:2px;}
+
+  /* confetti */
+  #fx{position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:120;}
+
+  /* deck shell */
+  .deck{height:100vh; height:100dvh; display:flex; flex-direction:column; overflow:hidden;}
+  .screens{position:relative; flex:1 1 auto; overflow:hidden;}
+  .screen{position:absolute; inset:0; overflow-y:auto; opacity:0; visibility:hidden; transform:translateX(16px); transition:opacity .42s ease, transform .42s ease; padding:30px 24px 34px;}
+  .screen.active{opacity:1; visibility:visible; transform:none; z-index:2;}
+  .screen.center{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;}
+  .screen.student{background:var(--mint);}
+  .holder{width:100%; max-width:980px; margin:0 auto;}
+
+  /* top progress bar */
+  .topbar{flex:0 0 auto; display:flex; align-items:center; gap:16px; padding:13px 24px; background:var(--navy); color:#fff;}
+  .acts{display:flex; align-items:center; gap:11px; min-width:0;}
+  .act{display:flex; align-items:center; gap:8px; background:none; border:none; color:rgba(255,255,255,.5); padding:0; font-family:inherit; font-weight:700; font-size:13.5px; white-space:nowrap; transition:color .2s;}
+  .act .an{font-family:var(--font-mono); font-size:11px; width:20px;height:20px;border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:rgba(255,255,255,.12); color:rgba(255,255,255,.6); transition:.2s;}
+  .act .at{overflow:hidden; text-overflow:ellipsis;}
+  .act.on{color:#fff;} .act.on .an{background:var(--green); color:#fff;}
+  .act.done{color:rgba(255,255,255,.7);} .act.done .an{background:rgba(155,227,200,.25); color:#9be3c8;}
+  .act-sep{color:rgba(255,255,255,.3); font-size:13px;}
+  .ptrack{flex:1 1 auto; height:4px; border-radius:2px; background:rgba(255,255,255,.14); overflow:hidden; min-width:60px;}
+  .ptrack i{display:block; height:100%; background:#9be3c8; border-radius:2px; width:0; transition:width .42s ease;}
+  .brandmini{flex:0 0 auto; font-size:11px; color:rgba(255,255,255,.45); display:flex; align-items:center; gap:7px;}
+  .brandmini .d{width:7px;height:7px;border-radius:50%;background:var(--green);}
+
+  /* bottom nav */
+  .nav{flex:0 0 auto; display:flex; align-items:center; gap:14px; padding:14px 24px; background:var(--cream-alt); border-top:1px solid var(--grey-line);}
+  .nav .hint{margin:0 auto; font-size:12px; color:var(--grey); display:flex; align-items:center; gap:7px;}
+  .nav .key{font-family:var(--font-mono); font-size:11px; border:1px solid var(--grey-line); border-radius:5px; padding:1px 6px; background:#fff; color:var(--grey);}
+  .btn{display:inline-flex; align-items:center; gap:8px; border:none; border-radius:10px; font-weight:700; font-size:14px; padding:12px 20px; transition:transform .08s, filter .15s, background .15s;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--navy); color:#fff;} .btn-primary:hover{filter:brightness(1.14);}
+  .btn-ghost{background:transparent; color:var(--navy); border:1px solid var(--grey-line);} .btn-ghost:hover{background:#fff;}
+  .btn-f1{background:var(--f1); color:#fff;} .btn-f1:hover{filter:brightness(1.08);}
+  .btn-green{background:var(--green); color:#fff;} .btn-green:hover{filter:brightness(1.08);}
+  .btn.big{font-size:16px; padding:15px 30px; border-radius:12px;}
+
+  /* eyebrow / shared */
+  .eyebrow{font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--burgundy); display:inline-flex; align-items:center; gap:10px;}
+  .eyebrow .bar{height:1px; width:30px; background:var(--burgundy); opacity:.5;}
+
+  /* COVER */
+  .cover-mark{font-family:var(--font-sans); font-weight:700; font-size:15px; color:var(--navy); display:flex; align-items:center; gap:9px; margin-bottom:34px;}
+  .cover-mark .dot{width:10px;height:10px;border-radius:50%;background:var(--green); box-shadow:0 0 0 4px var(--green-bg);}
+  .cover h1{font-family:var(--font-serif); font-size:46px; line-height:1.32; font-weight:600; letter-spacing:-.01em; max-width:780px;}
+  .cover .csub{margin-top:22px; font-size:17px; color:#42506f; line-height:1.8; max-width:560px;}
+  .cover .cmeta{margin-top:30px; font-family:var(--font-mono); font-size:12.5px; color:var(--grey); letter-spacing:.02em;}
+
+  /* CHAPTER CARDS */
+  .card-num{font-family:var(--font-serif); font-size:72px; font-weight:700; line-height:.85; color:var(--burgundy); opacity:.9;}
+  .card-act{margin-top:6px; font-size:12px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--grey);}
+  .card h2{font-family:var(--font-serif); font-size:38px; font-weight:600; line-height:1.35; margin-top:20px; max-width:680px;}
+  .card .cline{margin-top:18px; font-size:16.5px; color:#52607e; line-height:1.8; max-width:540px;}
+  .screen.student .card-num{color:var(--f1);}
+  .screen.student .card .cline{color:#3e5650;}
+  .card .chip-tip{margin-top:26px; font-size:12.5px; color:var(--grey); display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.6); border:1px solid var(--grey-line); padding:7px 13px; border-radius:999px;}
+  .screen.student .card .chip-tip{background:rgba(255,255,255,.7);}
+
+  /* section header (content screens) */
+  .sec-eyebrow{font-family:var(--font-mono); font-size:12px; font-weight:500; color:var(--burgundy); letter-spacing:.06em; margin-bottom:9px;}
+  .sec-title{font-family:var(--font-serif); font-size:24px; font-weight:600; line-height:1.4;}
+  .sec-desc{margin-top:10px; color:#52607e; max-width:640px; font-size:15px; line-height:1.7;}
+  .sec-head{margin-bottom:22px;}
+
+  /* ====== INTAKE (engine register) ====== */
+  .intake{background:var(--white); border:1px solid var(--grey-line); border-radius:14px; overflow:hidden; box-shadow:0 1px 0 rgba(27,42,78,.03);}
+  .intake-bar{display:flex; align-items:center; gap:9px; padding:12px 18px; border-bottom:1px solid var(--grey-line); background:var(--cream-alt);}
+  .intake-bar .crumbs{font-family:var(--font-mono); font-size:12px; color:var(--grey);} .intake-bar .crumbs b{color:var(--navy);}
+  .intake-bar .src-pill{margin-left:auto; font-size:11px; font-weight:700; letter-spacing:.03em; padding:4px 11px; border-radius:999px;}
+  .tabs{display:flex; gap:6px; padding:13px 16px 0; flex-wrap:wrap;}
+  .tab{border:1px solid var(--grey-line); background:var(--cream); color:#445; border-radius:10px 10px 0 0; padding:10px 14px 11px; font-size:13.5px; font-weight:700; border-bottom:none; position:relative; top:1px; display:flex; align-items:center; gap:9px;}
+  .tab .code{font-family:var(--font-mono); font-size:11px; font-weight:500; padding:2px 7px; border-radius:5px; background:var(--grey-soft); color:var(--grey);}
+  .tab.active{background:var(--white); color:var(--navy);}
+  .tab[data-mode="f1"].active{box-shadow:inset 0 3px 0 var(--f1);} .tab[data-mode="f1"].active .code{background:var(--f1-bg); color:var(--f1);}
+  .tab[data-mode="lx"].active{box-shadow:inset 0 3px 0 var(--lx);} .tab[data-mode="lx"].active .code{background:var(--lx-bg); color:var(--lx);}
+  .tab[data-mode="f2"].active{box-shadow:inset 0 3px 0 var(--f2);} .tab[data-mode="f2"].active .code{background:var(--f2-bg); color:var(--f2);}
+  .tab-strip{border-top:1px solid var(--grey-line); margin-top:-1px;}
+  .panel{display:none; padding:22px 20px;}
+  .panel.show{display:block;}
+  .panel .lede{font-size:14.5px; color:#445; line-height:1.7; margin-bottom:15px;} .panel .lede b{color:var(--navy);}
+  .frame-note{display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.6; color:#556; background:var(--f1-bg); border:1px solid rgba(14,130,118,.18); border-radius:9px; padding:11px 13px; margin-bottom:15px;}
+  .frame-note .k{color:var(--f1); font-weight:700; white-space:nowrap;}
+  .label{font-size:11.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--grey); margin-bottom:8px; display:block;}
+  .doc-tag{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:var(--navy); background:var(--grey-soft); padding:3px 9px; border-radius:6px;}
+  .in-passage{background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:10px; padding:16px; font-family:var(--font-serif); font-size:14px; line-height:1.78; color:#2a2f3a;}
+  .btn-row{display:flex; align-items:center; gap:12px; margin-top:14px; flex-wrap:wrap;}
+  .btn-hint{font-size:12.5px; color:var(--grey);}
+  .engine-out{margin-top:18px; border:1px solid var(--grey-line); border-radius:12px; overflow:hidden; opacity:0; max-height:0; transition:opacity .45s ease;}
+  .engine-out.reveal{opacity:1; max-height:1800px;}
+  .engine-out .eo-bar{display:flex; align-items:center; gap:9px; padding:10px 16px; background:var(--navy); color:#fff; font-size:12px;}
+  .engine-out .eo-bar .crumbs{font-family:var(--font-mono); color:rgba(255,255,255,.7);} .engine-out .eo-bar .crumbs b{color:#fff;}
+  .eo-grid{display:flex; flex-wrap:wrap; gap:1px; background:var(--grey-line);}
+  .eo-cell{background:var(--white); padding:17px 20px; flex:1 1 240px;} .eo-cell .label{margin-bottom:10px;}
+  .acc-num{font-family:var(--font-mono); font-size:36px; font-weight:500; line-height:1; color:var(--navy); display:flex; align-items:baseline; gap:8px;}
+  .acc-num .u{font-size:16px; color:var(--grey);}
+  .acc-band{font-size:11px; font-weight:700; padding:3px 10px; border-radius:999px; background:var(--amber-bg); color:var(--amber);}
+  .acc-meter{height:6px; border-radius:3px; background:var(--grey-soft); margin-top:13px; overflow:hidden;}
+  .acc-meter i{display:block; height:100%; border-radius:3px; width:0; background:var(--amber); transition:width .8s cubic-bezier(.2,.8,.2,1);}
+  .acc-scale{display:flex; justify-content:space-between; font-size:11px; color:var(--grey); margin-top:6px;}
+  .verify-head{display:flex; align-items:center; gap:11px;}
+  .verify-head .ck{width:26px;height:26px;border-radius:50%; background:var(--green-bg); color:var(--green); display:flex; align-items:center; justify-content:center; font-weight:800; flex:0 0 auto;}
+  .verify-head b{font-size:15px;} .verify-head .s{font-size:12px; color:var(--grey); margin-top:1px;}
+  .ck-pills{display:flex; flex-wrap:wrap; gap:6px; margin-top:12px;}
+  .ck-pill{font-size:11px; font-weight:700; color:var(--green); background:var(--green-bg); padding:4px 9px; border-radius:999px;}
+  .eo-stem{padding:17px 20px; background:var(--cream-alt); border-top:1px solid var(--grey-line);}
+  .eo-stem .tagrow{display:flex; flex-wrap:wrap; gap:7px; margin-bottom:11px;}
+  .mini-tag{font-size:11px; font-weight:700; padding:3px 9px; border-radius:6px; background:var(--white); border:1px solid var(--grey-line); color:#445;}
+  .mini-tag.accent{background:var(--f1-bg); color:var(--f1); border-color:rgba(14,130,118,.2);}
+  .eo-stem .q{font-family:var(--font-serif); font-weight:600; font-size:15px; color:var(--navy);}
+  .handoff{display:flex; align-items:center; gap:10px; margin-top:16px; padding:13px 16px; background:var(--navy); color:#fff; border-radius:10px; font-size:13.5px;}
+  .handoff .arr{font-size:17px;}
+  /* variant */
+  .variant-source{background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:10px; padding:15px; margin-bottom:16px;}
+  .variant-source .src-en{font-family:var(--font-serif); font-size:13.5px; line-height:1.74; color:#2a2f3a; margin-top:9px;}
+  .skeleton{border:1px dashed rgba(155,61,122,.4); border-radius:10px; padding:14px 16px; background:var(--lx-bg); margin-bottom:16px;}
+  .skeleton .sk-h{font-size:12px; font-weight:700; color:var(--lx); letter-spacing:.04em; margin-bottom:10px;}
+  .sk-step{display:flex; gap:11px; align-items:flex-start; padding:5px 0; font-size:13px; line-height:1.55; color:#3a3340;}
+  .sk-step .sn{font-family:var(--font-mono); font-size:11px; width:19px;height:19px;border-radius:50%; background:#fff; color:var(--lx); border:1px solid rgba(155,61,122,.3); display:flex; align-items:center; justify-content:center; flex:0 0 auto; font-weight:500;}
+  .sk-step.blank{color:var(--lx); font-weight:700;} .sk-step.blank .sn{background:var(--lx); color:#fff; border-color:var(--lx);}
+  .diff-toggle{display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap;}
+  .dt{border:1px solid var(--grey-line); background:var(--cream); color:#556; border-radius:8px; padding:8px 14px; font-size:13px; font-weight:700;}
+  .dt.on{background:var(--lx); color:#fff; border-color:var(--lx);}
+  .variant-out{border:1px solid var(--grey-line); border-radius:11px; overflow:hidden;}
+  .vo-bar{display:flex; align-items:center; gap:9px; padding:10px 15px; background:var(--cream-alt); border-bottom:1px solid var(--grey-line); font-size:12px;}
+  .vo-bar .lvl{font-family:var(--font-mono); font-weight:500; color:var(--lx);}
+  .vo-bar .pts{margin-left:auto; font-size:11px; font-weight:700; color:var(--grey);}
+  .vo-body{padding:16px 18px;}
+  .vo-body .v-en{font-family:var(--font-serif); font-size:14px; line-height:1.78; color:#2a2f3a;}
+  .v-opts{list-style:none; margin:14px 0 0; padding:0; display:flex; flex-direction:column; gap:7px;}
+  .v-opts li{display:flex; gap:10px; align-items:flex-start; font-family:var(--font-serif); font-size:13px; line-height:1.5; color:#3a3f48; padding:8px 11px; border:1px solid var(--grey-line); border-radius:8px; background:var(--white);}
+  .v-opts li .vc{font-family:var(--font-sans); font-weight:700; color:var(--grey); flex:0 0 auto;}
+  .v-opts li.ans{background:var(--lx-bg); border-color:rgba(155,61,122,.35);} .v-opts li.ans .vc{color:var(--lx);}
+  .v-opts li .tagn{margin-left:auto; font-size:10px; font-weight:800; color:#fff; background:var(--lx); padding:2px 8px; border-radius:999px; align-self:center; flex:0 0 auto;}
+  .vo-meta{margin-top:13px; font-size:12px; color:var(--grey); display:flex; gap:14px; flex-wrap:wrap;}
+  .vo-meta b{color:var(--lx); font-family:var(--font-mono); font-weight:500;}
+  /* f2 */
+  .f2-row{display:flex; gap:14px; flex-wrap:wrap; align-items:stretch;}
+  .f2-col{flex:1 1 280px; background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:10px; padding:16px;}
+  .f2-input{font-family:var(--font-mono); font-size:13px; color:var(--navy); background:#fff; border:1px solid var(--grey-line); border-radius:8px; padding:11px 13px; margin-top:9px;}
+  .f2-gen{opacity:.45; transition:opacity .4s;} .f2-gen.on{opacity:1;}
+  .f2-gen .gl{font-size:12px; color:var(--f2); font-weight:700; margin-bottom:8px;}
+  .f2-gen .gtxt{font-family:var(--font-serif); font-size:13.5px; line-height:1.7; color:#2a2f3a;}
+  .f2-gen .gmeta{display:none; margin-top:9px; font-family:var(--font-mono); font-size:11.5px; color:var(--grey);}
+  .f2-gen.on .gmeta{display:block;}
+
+  /* ====== STUDENT APP SHELL ====== */
+  .app{max-width:760px; margin:0 auto; background:var(--white); border:1px solid var(--grey-line); border-radius:18px; box-shadow:0 8px 30px rgba(27,42,78,.07); overflow:hidden;}
+  .app-bar{display:flex; align-items:center; gap:14px; padding:13px 18px; background:linear-gradient(180deg,#fff, #fbfdfc); border-bottom:1px solid var(--grey-line);}
+  .app-bar .who{display:flex; align-items:center; gap:9px;}
+  .app-bar .ava{width:34px;height:34px;border-radius:50%; background:var(--f1); color:#fff; font-weight:800; display:flex; align-items:center; justify-content:center; font-size:14px; box-shadow:0 0 0 3px var(--f1-bg);}
+  .app-bar .who b{font-size:14px; display:block;} .app-bar .who .lv{font-size:11px; font-weight:700; color:var(--f1);}
+  .xp-wrap{flex:1 1 auto; min-width:90px; position:relative;}
+  .xp-top{display:flex; justify-content:space-between; font-size:11px; color:var(--grey); margin-bottom:4px;} .xp-top b{color:var(--navy); font-family:var(--font-mono);}
+  .xp-track{height:8px; border-radius:5px; background:var(--grey-soft); overflow:hidden;}
+  .xp-track i{display:block; height:100%; border-radius:5px; background:linear-gradient(90deg,var(--f1),#36b39c); transition:width .7s cubic-bezier(.2,.8,.2,1);}
+  .xp-pop{position:absolute; right:0; top:-14px; font-size:12px; font-weight:800; color:var(--f1); animation:xpUp 1.2s ease forwards;}
+  @keyframes xpUp{0%{opacity:0; transform:translateY(6px);}20%{opacity:1;}100%{opacity:0; transform:translateY(-20px);}}
+  .streak{flex:0 0 auto; font-size:15px; font-weight:800; color:var(--amber); background:var(--amber-bg); padding:6px 11px; border-radius:999px; white-space:nowrap;}
+  .app-body{padding:24px 26px 26px;}
+
+  /* ---- solve ---- */
+  .route-passage{font-family:var(--font-serif); font-size:16px; line-height:1.85; color:#23282f; word-break:keep-all;}
+  .stem{font-family:var(--font-serif); font-weight:600; font-size:15.5px; color:var(--navy); margin:20px 0 13px;}
+  .options{display:flex; flex-direction:column; gap:9px;}
+  .opt{display:flex; gap:13px; align-items:flex-start; text-align:left; width:100%; background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:12px; padding:13px 15px; font-family:var(--font-serif); font-size:14.5px; line-height:1.55; color:#2a2f3a; transition:border-color .12s, background .12s, transform .12s;}
+  .opt:hover{border-color:var(--f1); background:#fff;}
+  .opt .oc{font-family:var(--font-sans); font-weight:700; color:var(--grey); flex:0 0 auto;}
+  .opt.correct{border-color:var(--green); background:var(--green-bg); border-width:2px;} .opt.correct .oc{color:var(--green);}
+  .opt.wrong{border-color:var(--red); background:var(--red-bg);} .opt.wrong .oc{color:var(--red);}
+  .opt .res{margin-left:auto; font-family:var(--font-sans); font-size:11px; font-weight:800; padding:3px 11px; border-radius:999px; flex:0 0 auto; align-self:center; background:var(--green); color:#fff;}
+  .opt .res.no{background:var(--red);}
+  .opt.shake{animation:shake .5s;}
+  @keyframes shake{10%,90%{transform:translateX(-2px);}20%,80%{transform:translateX(4px);}30%,50%,70%{transform:translateX(-7px);}40%,60%{transform:translateX(7px);}}
+  .solve-fb{margin-top:18px; padding:13px 16px; border-radius:11px; font-size:14px; font-weight:600; background:var(--cream-alt); color:var(--grey); border:1px solid var(--grey-line);}
+  .solve-fb.ok{background:var(--green-bg); color:#23322a; border-color:rgba(46,125,91,.3);} .solve-fb.ok b{color:var(--green);}
+  .solve-fb.no{background:var(--amber-bg); color:#4a3c20; border-color:rgba(197,138,29,.3);} .solve-fb.no b{color:var(--amber);}
+
+  /* ---- tutor ---- */
+  .tutor-head{display:flex; align-items:center; gap:11px; margin-bottom:18px;}
+  .tutor-head .ico{width:34px;height:34px;border-radius:10px; background:var(--f1); color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px;}
+  .tutor-head b{font-size:15px;} .tutor-head .s{font-size:12px; color:var(--grey);}
+  .tmsg{display:flex; gap:11px; margin-bottom:15px; align-items:flex-start;}
+  .tmsg .av{width:30px;height:30px;border-radius:50%; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:800;}
+  .tmsg.student{flex-direction:row-reverse;}
+  .tmsg.student .av{background:var(--grey-soft); color:var(--grey);}
+  .tmsg.student .bubble{background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:13px 13px 3px 13px; max-width:80%;}
+  .tmsg.ai .av{background:var(--f1-bg); color:var(--f1);}
+  .tmsg.ai .bubble{background:#fff; border:1px solid var(--f1); border-left-width:3px; border-radius:13px 13px 13px 3px; max-width:84%;}
+  .bubble{padding:12px 15px; font-size:14px; line-height:1.65; color:#2a2f3a;}
+  .hint-label{font-size:11px; font-weight:800; letter-spacing:.04em; color:var(--f1); margin-bottom:6px; display:flex; align-items:center; gap:6px; text-transform:uppercase;}
+  .hint-label .step{font-family:var(--font-mono); background:var(--f1-bg); padding:1px 7px; border-radius:5px; font-weight:500;}
+  .tmsg.hidden{display:none;}
+  .tutor-foot{display:flex; align-items:center; gap:13px; flex-wrap:wrap; margin-top:6px;}
+  .more-btn{display:inline-flex; align-items:center; gap:8px; background:var(--f1); color:#fff; border:none; border-radius:10px; padding:11px 18px; font-weight:700; font-size:13.5px;}
+  .more-btn:hover{filter:brightness(1.08);}
+  .more-btn:disabled{background:var(--grey-soft); color:var(--grey); cursor:default; filter:none;}
+  .tutor-principle{display:flex; gap:9px; align-items:flex-start; margin-top:18px; padding:13px 15px; background:var(--cream-alt); border:1px solid var(--grey-line); border-left:3px solid var(--burgundy); border-radius:9px; font-size:13px; line-height:1.6; color:#445;}
+  .tutor-principle .k{color:var(--burgundy); font-weight:800; white-space:nowrap;}
+
+  /* ---- haeseol ---- */
+  .hs-head{display:flex; align-items:center; gap:11px; margin-bottom:4px;}
+  .hs-head .burg{font-family:var(--font-serif); font-size:30px; font-weight:700; color:var(--burgundy); line-height:.8;}
+  .hs-head b{font-size:16px;} .hs-head .s{font-size:12px; color:var(--grey); margin-top:2px;}
+  .hs-tabs{display:flex; gap:2px; margin:16px 0 0; border-bottom:1px solid var(--grey-line); overflow-x:auto;}
+  .hs-tab{flex:0 0 auto; border:none; background:transparent; color:var(--grey); font-weight:700; font-size:13.5px; padding:12px 15px; border-bottom:2px solid transparent;}
+  .hs-tab.active{color:var(--navy); border-bottom-color:var(--burgundy);}
+  .hs-panel{display:none; padding:22px 2px 4px;}
+  .hs-panel.show{display:block;}
+  .oneliner{display:flex; gap:13px; align-items:flex-start; background:var(--green-bg); border:1px solid rgba(46,125,91,.25); border-radius:11px; padding:16px 18px;}
+  .oneliner .badge{font-family:var(--font-serif); font-size:22px; font-weight:700; color:var(--green); flex:0 0 auto; line-height:1;}
+  .oneliner p{font-family:var(--font-serif); font-size:15px; line-height:1.7; color:#23322a;} .oneliner b{color:var(--green);}
+  .block-label{font-size:11.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--burgundy); margin:26px 0 13px; display:flex; align-items:center; gap:9px;}
+  .block-label::after{content:""; flex:1; height:1px; background:var(--grey-line);}
+  .flow{display:flex; flex-direction:column; gap:10px;}
+  .flow-path{display:flex; align-items:center; gap:9px; flex-wrap:wrap; padding:12px 14px; border-radius:10px; border:1px solid var(--grey-line); background:var(--cream-alt);}
+  .flow-path .who2{font-weight:800; font-size:13px; padding:4px 11px; border-radius:7px; flex:0 0 auto;}
+  .flow-path.big .who2{background:var(--plP-bg); color:var(--plP);}
+  .flow-path.small .who2{background:var(--plW-bg); color:var(--plW);}
+  .flow-path .step{font-family:var(--font-serif); font-size:13px; color:#3a3f48;} .flow-path .arr{color:var(--grey); font-size:12px;}
+  .flow-cap{margin-top:12px; font-size:13px; color:var(--grey); line-height:1.6;} .flow-cap b{color:var(--navy);}
+  .explain{font-family:var(--font-serif); font-size:14.5px; line-height:1.85; color:#2c313a;} .explain p{margin-bottom:12px;}
+  .plew{display:inline-flex; align-items:center; gap:5px; vertical-align:middle;}
+  .plew .g{width:19px;height:19px;border-radius:5px; font-size:11px; font-weight:800; display:inline-flex; align-items:center; justify-content:center; font-family:var(--font-mono);}
+  .plew .pn{font-size:10.5px; font-weight:700; color:var(--grey);}
+  .pl-P .g{background:var(--plP-bg); color:var(--plP);}
+  .breakdown{display:flex; flex-direction:column;}
+  .bd{padding:15px 0; border-bottom:1px solid var(--grey-line);} .bd:last-child{border-bottom:none;}
+  .bd.key{background:var(--plP-bg); margin:0 -12px; padding:15px 12px; border-radius:9px; border-bottom:none;}
+  .bd-top{display:flex; align-items:flex-start; gap:10px; margin-bottom:9px; flex-wrap:wrap;}
+  .bd-en{font-family:var(--font-serif); font-size:14px; line-height:1.6; color:#23282f; flex:1; min-width:200px;}
+  .bd .strike{color:var(--grey); text-decoration:line-through; text-decoration-color:rgba(110,110,110,.4);}
+  .key-tag{font-size:10px; font-weight:800; color:#fff; background:var(--plP); padding:2px 8px; border-radius:999px; flex:0 0 auto; letter-spacing:.04em;}
+  .bd-lines{padding-left:29px; display:flex; flex-direction:column; gap:5px;}
+  .bd-easy{font-size:13px; color:#556; line-height:1.55;} .bd-easy .t{font-family:var(--font-mono); font-size:10px; color:var(--f1); font-weight:500; margin-right:7px;}
+  .bd-ko{font-size:13.5px; color:#2a2f3a; line-height:1.6;} .bd-ko .t{color:var(--grey); margin-right:5px;}
+  .bd-struct{font-size:12.5px; color:var(--grey); line-height:1.5;} .bd-struct .t{font-weight:700; color:var(--navy); margin-right:6px;}
+  .wrong-list{display:flex; flex-direction:column; gap:10px;}
+  .wrong-item{display:flex; gap:13px; align-items:flex-start; padding:14px 16px; border:1px solid var(--grey-line); border-radius:11px; background:var(--cream-alt);}
+  .wrong-item.ans{background:var(--green-bg); border-color:rgba(46,125,91,.3);}
+  .wrong-item .oc{font-family:var(--font-serif); font-weight:700; font-size:17px; color:var(--grey); flex:0 0 auto; line-height:1.2;}
+  .wrong-item.ans .oc{color:var(--green);}
+  .wi-body{flex:1; min-width:0;}
+  .wi-top{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:5px;}
+  .wi-opt{font-family:var(--font-serif); font-size:13.5px; color:#2a2f3a;}
+  .trap-pill{font-size:10.5px; font-weight:800; padding:2px 9px; border-radius:999px; background:var(--red-bg); color:var(--red); letter-spacing:.03em; flex:0 0 auto;}
+  .trap-pill.most{background:var(--amber-bg); color:var(--amber);} .trap-pill.ans{background:var(--green); color:#fff;}
+  .wi-why{font-size:12.5px; color:#556; line-height:1.55;}
+  .vg-table{width:100%; border-collapse:collapse; font-size:13px;}
+  .vg-table td{padding:9px 12px; border-bottom:1px solid var(--grey-line); vertical-align:top;}
+  .vg-table .w{font-family:var(--font-serif); font-weight:600; color:var(--navy); white-space:nowrap;}
+  .vg-table .syn{color:var(--f1); font-size:12px;} .vg-table .mn{color:var(--grey); white-space:nowrap;}
+  .gram-list{display:flex; flex-direction:column; gap:11px; margin-top:4px;}
+  .gram-item{display:flex; gap:12px; align-items:flex-start; font-size:13.5px; line-height:1.6;}
+  .gram-item .gk{font-family:var(--font-serif); font-weight:700; color:var(--burgundy); flex:0 0 auto; min-width:128px;} .gram-item .gv{color:#445;}
+  .hs-foot{margin-top:22px; padding-top:18px; border-top:1px solid var(--grey-line); display:flex; align-items:center; gap:13px; flex-wrap:wrap;}
+  .hs-foot .got-msg{display:none; font-size:13.5px; font-weight:700; color:var(--green);}
+
+  /* ---- report ---- */
+  .rep-head{display:flex; align-items:center; gap:14px; margin-bottom:22px; flex-wrap:wrap;}
+  .rep-score{font-family:var(--font-mono); font-size:38px; font-weight:500; color:var(--navy); line-height:1;}
+  .rep-score .u{font-size:17px; color:var(--grey);}
+  .rep-grade{font-size:13px; font-weight:800; color:#fff; background:var(--amber); padding:5px 13px; border-radius:999px;}
+  .rep-xp{margin-left:auto; text-align:right; font-size:12.5px; color:var(--grey); line-height:1.5;}
+  .rep-xp b{color:var(--f1); font-family:var(--font-mono);}
+  .bands{display:flex; gap:6px; margin-bottom:8px;}
+  .band{flex:1; text-align:center; padding:10px 4px; border-radius:8px; background:var(--cream-alt); border:1px solid var(--grey-line);}
+  .band .bn{font-size:12px; font-weight:800; color:var(--grey);} .band .br{font-family:var(--font-mono); font-size:10.5px; color:var(--grey); margin-top:2px;}
+  .band.cur{background:var(--amber-bg); border-color:var(--amber);} .band.cur .bn{color:var(--amber);} .band.cur .br{color:var(--amber);}
+  .band-cap{font-size:12.5px; color:var(--grey); margin-bottom:24px;} .band-cap b{color:var(--navy);}
+  .typebars{display:flex; flex-direction:column; gap:11px;}
+  .tbar{display:flex; align-items:center; gap:13px;}
+  .tbar .tn{font-size:13px; font-weight:600; color:#2a2f3a; flex:0 0 150px;}
+  .tbar .track{flex:1; height:22px; background:var(--grey-soft); border-radius:6px; overflow:hidden;}
+  .tbar .fill{display:block; height:100%; border-radius:6px; width:0; transition:width .9s cubic-bezier(.2,.8,.2,1);}
+  .tbar .pct{font-family:var(--font-mono); font-size:12.5px; font-weight:500; flex:0 0 56px; text-align:right;}
+  .diagnosis{margin-top:26px; background:var(--white); border:1px solid var(--burgundy); border-left:4px solid var(--burgundy); border-radius:11px; padding:19px 21px;}
+  .diagnosis .dh{font-size:12px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:var(--burgundy); margin-bottom:10px;}
+  .diagnosis .dmain{font-family:var(--font-serif); font-size:15.5px; line-height:1.7; color:#2a2f3a;} .diagnosis .dmain b{color:var(--burgundy);}
+  .diagnosis .dfix{margin-top:13px; padding-top:13px; border-top:1px solid var(--grey-line); font-size:13.5px; color:#445; line-height:1.65;} .diagnosis .dfix .k{font-weight:800; color:var(--green);}
+  .wrong-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+  .wrong-table th{text-align:left; font-size:11px; color:var(--grey); font-weight:700; padding:8px 10px; border-bottom:2px solid var(--grey-line); white-space:nowrap;}
+  .wrong-table td{padding:9px 10px; border-bottom:1px solid var(--grey-line);}
+  .wrong-table .num{font-family:var(--font-mono);} .wrong-table .mv{color:var(--red); font-weight:700;} .wrong-table .star{color:var(--burgundy); font-weight:800;}
+  .vocab-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:7px;}
+  .vchip{display:flex; flex-direction:column; gap:1px; padding:9px 11px; background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:8px;}
+  .vchip .vw{font-family:var(--font-serif); font-weight:600; font-size:13px; color:var(--navy);} .vchip .vm{font-size:11.5px; color:var(--grey);}
+
+  /* ====== CLOSE ====== */
+  .close-wrap{max-width:840px; margin:0 auto; width:100%; background:var(--navy); color:#fff; border-radius:18px; padding:46px 44px;}
+  .close-eyebrow{font-size:12px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:#9be3c8; margin-bottom:18px;}
+  .close-line{font-family:var(--font-serif); font-size:25px; line-height:1.55; font-weight:500;} .close-line b{color:#9be3c8;}
+  .pipeline{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:26px 0 6px;}
+  .pipeline .pp{font-size:13px; font-weight:700; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); padding:8px 13px; border-radius:999px;}
+  .pipeline .pa{color:#9be3c8;}
+  .integ{display:flex; flex-wrap:wrap; gap:13px; margin-top:26px;}
+  .integ-item{flex:1 1 200px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:11px; padding:15px 17px;}
+  .integ-item .ih{font-weight:700; font-size:14px; margin-bottom:5px;} .integ-item .ip{font-size:12.5px; color:rgba(255,255,255,.62); line-height:1.55;}
+
+  /* responsive */
+  @media (max-width:720px){
+    .cover h1{font-size:30px;} .card h2{font-size:27px;} .card-num{font-size:54px;}
+    .close-line{font-size:20px;} .close-wrap{padding:30px 22px;}
+    .app-body{padding:18px;} .sec-title{font-size:20px;}
+    .acc-num{font-size:28px;} .tbar .tn{flex-basis:96px; font-size:12px;}
+    .bands{flex-wrap:wrap;} .band{flex-basis:30%;}
+    .bd-lines{padding-left:0;}
+    .app-bar{flex-wrap:wrap;} .xp-wrap{order:3; flex-basis:100%;}
+    .topbar .at{display:none;} .brandmini{display:none;}
+    .tmsg.student .bubble,.tmsg.ai .bubble{max-width:88%;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none !important;}}
+  /*CSS2*/
+  /* link tab underline */
+  .tab[data-mode="link"].active{box-shadow:inset 0 3px 0 var(--green);} .tab[data-mode="link"].active .code{background:var(--green-bg); color:var(--green);}
+  /* F1 generated answer options */
+  .eo-opts{list-style:none; margin:13px 0 0; padding:0; display:flex; flex-direction:column; gap:6px;}
+  .eo-opts li{display:flex; gap:10px; align-items:flex-start; font-family:var(--font-serif); font-size:13px; line-height:1.5; color:#3a3f48; padding:8px 11px; border:1px solid var(--grey-line); border-radius:8px; background:var(--white);}
+  .eo-opts li .ec{font-family:var(--font-sans); font-weight:700; color:var(--grey); flex:0 0 auto;}
+  .eo-opts li.ans{background:var(--f1-bg); border-color:rgba(14,130,118,.35);} .eo-opts li.ans .ec{color:var(--f1);}
+  .eo-opts li .etag{margin-left:auto; font-size:10px; font-weight:800; color:#fff; background:var(--f1); padding:2px 8px; border-radius:999px; align-self:center; flex:0 0 auto;}
+  .eo-ans{margin-top:11px; font-size:12.5px; color:#445; line-height:1.6; background:var(--cream-alt); border:1px solid var(--grey-line); border-radius:8px; padding:10px 13px;} .eo-ans .k{font-weight:800; color:var(--f1); margin-right:7px;}
+  /* integration (교재 연동) */
+  .frame-note.green{background:var(--green-bg); border-color:rgba(46,125,91,.2);} .frame-note.green .k{color:var(--green);}
+  .book{position:relative; background:#fdfbf6; border:1px solid var(--grey-line); border-left:5px solid var(--green); border-radius:8px; box-shadow:0 2px 10px rgba(27,42,78,.05); overflow:hidden;}
+  .book-head{display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--grey-line); background:#f7f2e8; font-size:12px; color:var(--grey);}
+  .book-head .book-name{font-weight:700; color:var(--navy);} .book-head .book-pg{margin-left:auto; font-family:var(--font-mono); font-size:11px;}
+  .book-body{padding:18px 22px;}
+  .book-unit{font-family:var(--font-serif); font-weight:700; font-size:15px; color:var(--navy); margin-bottom:11px;}
+  .book-passage{font-family:var(--font-serif); font-size:14px; line-height:1.85; color:#23282f;}
+  .link-flow{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin:16px 0 14px;}
+  .lf-chip{font-size:12px; font-weight:700; padding:7px 13px; border-radius:999px; background:var(--white); border:1px solid var(--grey-line); color:#445;}
+  .lf-chip.eng{background:var(--green-bg); border-color:rgba(46,125,91,.25); color:var(--green);}
+  .lf-chip.out{background:var(--navy); border-color:var(--navy); color:#fff;}
+  .lf-arr{color:var(--grey);}
+  .link-out{opacity:0; max-height:0; overflow:hidden; transition:opacity .45s ease;}
+  .link-out.reveal{opacity:1; max-height:1600px;}
+  .lo-bar{display:flex; align-items:center; gap:10px; padding:10px 16px; background:var(--navy); color:#fff; border-radius:10px 10px 0 0; font-size:12px;}
+  .lo-bar .crumbs{font-family:var(--font-mono); color:rgba(255,255,255,.7);} .lo-bar .crumbs b{color:#fff;}
+  .lo-bar .lo-link{margin-left:auto; font-size:11px; font-weight:700; color:#9be3c8;}
+  .lq-list{border:1px solid var(--grey-line); border-top:none; display:flex; flex-direction:column;}
+  .lq{display:flex; gap:13px; align-items:flex-start; padding:13px 16px; border-bottom:1px solid var(--grey-line); background:var(--white);}
+  .lq:last-child{border-bottom:none;}
+  .lq-type{font-size:11px; font-weight:800; color:var(--green); background:var(--green-bg); padding:4px 10px; border-radius:7px; flex:0 0 auto; min-width:42px; text-align:center;}
+  .lq-type.seo{color:var(--burgundy); background:var(--plL-bg);}
+  .lq.seosul{background:var(--cream-alt);}
+  .lq-body{flex:1; min-width:0;}
+  .lq-stem{font-family:var(--font-serif); font-size:13.5px; color:#23282f; line-height:1.5;}
+  .lq-stem i{font-style:italic;}
+  .lq-meta{display:flex; align-items:center; gap:9px; margin-top:6px; flex-wrap:wrap;}
+  .lq-band{font-size:11px; color:var(--grey); font-family:var(--font-mono);}
+  .lq-tag{font-size:11px; color:#556; background:var(--grey-soft); padding:2px 8px; border-radius:6px;}
+  .seo-badge{font-size:10px; font-weight:800; color:#fff; background:var(--burgundy); padding:2px 9px; border-radius:999px;}
+  .lo-foot{display:flex; align-items:center; gap:10px; margin-top:14px; padding:12px 15px; background:var(--green-bg); border:1px solid rgba(46,125,91,.22); border-radius:10px; font-size:13px; color:#23322a;} .lo-foot .arr{color:var(--green); font-size:16px;} .lo-foot b{color:var(--green);}  #p-link .eo-opts li.ans{background:var(--green-bg); border-color:rgba(46,125,91,.35);} #p-link .eo-opts li.ans .ec{color:var(--green);} #p-link .eo-opts li .etag{background:var(--green);}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<div class="deck">
+  <!-- TOP PROGRESS -->
+  <header class="topbar" id="topbar">
+    <div class="acts">
+      <button class="act" id="act1lbl"><span class="an">1</span><span class="at">콘텐츠가 문항이 된다</span></button>
+      <span class="act-sep">›</span>
+      <button class="act" id="act2lbl"><span class="an">2</span><span class="at">학생의 경험</span></button>
+    </div>
+    <div class="ptrack"><i id="pfill"></i></div>
+    <div class="brandmini"><span class="d"></span>문항 엔진 · 화이트라벨</div>
+  </header>
+
+  <!-- SCREENS -->
+  <main class="screens" id="screens">
+    <!-- 0 · COVER -->
+    <section class="screen center" id="sc-cover">
+      <div class="cover">
+        <div class="cover-mark"><span class="dot"></span>문항 엔진 · 화이트라벨 데모</div>
+        <h1>이미 가진 콘텐츠가<br>등급별 문항과 학생 리포트가 됩니다.</h1>
+        <p class="csub">귀사의 지문 위에서 문항을 만들고, 검증하고, 학생이 풀고, 막히면 코칭하고, 약점을 진단합니다 — 전부 하나의 흐름으로.</p>
+        <p class="cmeta">Stream Learning &nbsp;·&nbsp; eFuture 제안용 데모</p>
+      </div>
+    </section>
+
+    <!-- 1 · CARD ① -->
+    <section class="screen center" id="sc-card1">
+      <div class="card">
+        <div class="card-num">①</div>
+        <div class="card-act">PART 1 · 콘텐츠가 문항이 된다</div>
+        <h2>콘텐츠 투입</h2>
+        <p class="cline">귀사가 가진 지문을 넣으면, 엔진이 문항을 만들고 4단계로 검증합니다. 새로 쓰지 않아도 됩니다.</p>
+        <div class="chip-tip">⌨ 세 가지 투입 방식 — 내 콘텐츠 · 수능→내신 변형 · 신규 생성</div>
+      </div>
+    </section>
+
+    <!-- 2 · INTAKE -->
+    <section class="screen" id="sc-intake">
+      <div class="holder">
+        <div class="sec-head">
+          <div class="sec-eyebrow">PART 1 · 콘텐츠 투입</div>
+          <h2 class="sec-title">세 가지 방식으로 콘텐츠를 문항으로</h2>
+          <p class="sec-desc">귀사 상황에 맞춰 고르면 됩니다. 지금 데모는 <b>내 콘텐츠 투입</b>을 기본으로 보여드립니다.</p>
+        </div>
+
+        <div class="intake">
+          <div class="intake-bar">
+            <span class="crumbs">문항 엔진 / <b>투입</b></span>
+            <span class="src-pill" id="srcPill" style="background:var(--f1-bg); color:var(--f1);">F1 · 내 콘텐츠</span>
+          </div>
+          <div class="tabs">
+            <button class="tab active" data-mode="f1" onclick="setTab('f1')"><span class="code">F1</span> 내 콘텐츠</button>
+            <button class="tab" data-mode="link" onclick="setTab('link')"><span class="code">연동</span> 교재 연동</button>
+            <button class="tab" data-mode="lx" onclick="setTab('lx')"><span class="code">변형</span> 수능 → 내신</button>
+            <button class="tab" data-mode="f2" onclick="setTab('f2')"><span class="code">F2</span> 신규 생성</button>
+          </div>
+          <div class="tab-strip">
+
+            <!-- F1 -->
+            <div class="panel show" id="p-f1">
+              <p class="lede">귀사가 이미 보유한 지문을 그대로 붙여넣으면, 엔진이 <b>내신·서술형 유형</b>의 문항을 생성합니다. 새 콘텐츠가 필요 없습니다.</p>
+              <span class="label">투입 지문 <span class="doc-tag">고3 모의고사 · 요지</span></span>
+              <div class="in-passage">A chess master glancing at a midgame position sees almost instantly the few moves worth considering; a radiologist reading a film identifies the relevant region before a trainee has finished orienting. What the same expertise obscures is harder to see in advance. The categories that have become automatic determine which features register as data at all. In domains whose underlying structure stays stable, that automation is pure gain. In domains that shift — new technologies, unfamiliar populations, or problems that cross fields — the expert's filters continue to operate as though the old structure still holds. The update is delayed by a layer the expert is not privy to: the prior classification of what is worth attending to at all. Rapid judgment rests on precisely the machinery that quiet anomalies cannot reach.</div>
+              <div class="btn-row">
+                <button class="btn btn-f1" onclick="genF1()">⚙ 문항 생성</button>
+                <span class="btn-hint" id="f1hint">버튼을 누르면 엔진이 문항을 만들고 검증합니다.</span>
+              </div>
+
+              <div class="engine-out" id="f1out">
+                <div class="eo-bar"><span class="crumbs">생성 결과 / <b>요지 추론 · 1문항</b></span></div>
+                <div class="eo-grid">
+                  <div class="eo-cell">
+                    <span class="label">예측 정답률</span>
+                    <div class="acc-num">61<span class="u">%</span> &nbsp;<span class="acc-band">중상 난이도</span></div>
+                    <div class="acc-meter"><i id="accFill"></i></div>
+                    <div class="acc-scale"><span>쉬움</span><span>어려움</span></div>
+                  </div>
+                  <div class="eo-cell">
+                    <div class="verify-head"><span class="ck">✓</span><div><b>검증 4단계 통과</b><div class="s">구조 · 근거 · 변별 · 일관성</div></div></div>
+                    <div class="ck-pills"><span class="ck-pill">구조 12/12</span><span class="ck-pill">근거 7/7</span><span class="ck-pill">변별 9/9</span><span class="ck-pill">일관성 5/5</span></div>
+                  </div>
+                </div>
+                <div class="eo-stem">
+                  <div class="tagrow"><span class="mini-tag accent">요지 추론</span><span class="mini-tag">객관식 5지선다</span><span class="mini-tag">출처: 귀사 지문</span></div>
+                  <p class="q">다음 글의 요지로 가장 적절한 것은?</p>
+                  <ul class="eo-opts">
+                    <li><span class="ec">①</span> Domain expertise is ineffective in environments distinct from their own</li>
+                    <li><span class="ec">②</span> Automating a task is purely beneficial when that industry is static</li>
+                    <li><span class="ec">③</span> Expert judgement can only operate successfully within its own category</li>
+                    <li><span class="ec">④</span> Reliance on expert automation in shifting industries is detrimental</li>
+                    <li class="ans"><span class="ec">⑤</span> Expertise sharpens pattern recognition at the expense of flexibility <span class="etag">정답</span></li>
+                  </ul>
+                  <div class="eo-ans"><span class="k">정답 근거</span> 자동화된 범주는 빠른 판단을 주지만, 구조가 바뀐 영역에서는 같은 필터가 변화를 놓치게 합니다 — 숙련이 유연성을 대가로 한다는 ⑤가 요지입니다.</div>
+                </div>
+              </div>
+              <div class="handoff" id="f1handoff" style="display:none;"><span class="arr">→</span> <span>생성된 문항은 <b>정답·해설과 함께</b> 학생 앱으로 그대로 전달됩니다.</span></div>
+            </div>
+
+            <!-- 교재 연동 -->
+            <div class="panel" id="p-link">
+              <p class="lede">eFuture가 이미 보유한 <b>교재·내신 자료</b>의 지문을 그대로 가져옵니다. 엔진이 지문을 읽고 <b>같은 지문에 연결된 문항 세트</b>를 자동으로 만듭니다 — 학생은 책으로 배우고, 같은 지문으로 디지털 문항을 풉니다.</p>
+              <div class="frame-note green"><span class="k">eFuture 연동</span><span>출판된 카탈로그가 그대로 문항 자산이 됩니다. 새 콘텐츠 제작 없이 보유 IP를 디지털 학습으로 전환합니다.</span></div>
+
+              <span class="label">교재 지문 <span class="doc-tag">능률 ELT · 내신 단원평가</span></span>
+              <div class="book">
+                <div class="book-head"><span class="book-spine"></span><span class="book-name">Lesson 3 단원평가 · Reading</span><span class="book-pg">p. 24</span></div>
+                <div class="book-body">
+                  <div class="book-unit">The Hidden Side of Everyday Plants</div>
+                  <p class="book-passage">We all know that tomatoes are good for our health. Up until the 1800s, however, most Americans thought that tomatoes were poisonous. In 1820, a man named Robert Johnson wanted to prove that tomatoes were safe to eat. So, he ate a basket of tomatoes in front of many people watching him. They all expected him to die, but nothing happened to him. Ever since then, Americans have enjoyed eating tomatoes.</p>
+                </div>
+              </div>
+
+              <div class="link-flow">
+                <span class="lf-chip">교재 지문</span><span class="lf-arr">→</span>
+                <span class="lf-chip eng">엔진이 지문 분석</span><span class="lf-arr">→</span>
+                <span class="lf-chip out">문항 자동 연결</span>
+              </div>
+              <div class="btn-row">
+                <button class="btn btn-green" onclick="genLink()">▶ 이 지문에 문항 연결</button>
+                <span class="btn-hint">교재 지문 하나가 디지털 문항 세트로 바뀝니다.</span>
+              </div>
+
+              <div class="link-out" id="linkOut">
+                <div class="lo-bar"><span class="crumbs">자동 연결 결과 / <b>이 지문 하나에서 5문항</b></span><span class="lo-link">● 모두 같은 지문에 연결됨</span></div>
+                <div class="lq-list">
+                  <div class="lq"><span class="lq-type">주제</span><div class="lq-body"><div class="lq-stem">다음 글의 주제로 가장 적절한 것은?</div><div class="lq-meta"><span class="lq-band">난이도 중</span><span class="lq-tag">객관식 5지선다</span></div></div></div>
+                  <div class="lq"><span class="lq-type">빈칸</span><div class="lq-body"><div class="lq-stem">빈칸에 들어갈 말로 가장 적절한 것은?</div><div class="lq-meta"><span class="lq-band">난이도 중상</span><span class="lq-tag">객관식 5지선다</span></div></div></div>
+                  <div class="lq"><span class="lq-type">어법</span><div class="lq-body"><div class="lq-stem">밑줄 친 부분 중 어법상 틀린 것은?</div><div class="lq-meta"><span class="lq-band">난이도 중</span><span class="lq-tag">객관식 5지선다</span></div></div></div>
+                  <div class="lq expanded"><span class="lq-type">함축</span><div class="lq-body"><div class="lq-stem">글에서 <i>They all expected him to die, but nothing happened to him</i>가 시사하는 바로 가장 적절한 것은?</div><div class="lq-meta"><span class="lq-band">난이도 중</span><span class="lq-tag">객관식 5지선다</span></div>
+                    <ul class="eo-opts">
+                      <li class="ans"><span class="ec">①</span> The popular belief about tomatoes was actually wrong <span class="etag">정답</span></li>
+                      <li><span class="ec">②</span> Robert Johnson was a very brave man who took huge risks</li>
+                      <li><span class="ec">③</span> The crowd had been hoping for a public execution that day</li>
+                      <li><span class="ec">④</span> Tomatoes are a food that can save people's lives entirely</li>
+                      <li><span class="ec">⑤</span> Many people in 1820 personally disliked Robert Johnson</li>
+                    </ul>
+                  </div></div>
+                  <div class="lq seosul"><span class="lq-type seo">서술형</span><div class="lq-body"><div class="lq-stem">Robert Johnson이 한 일을 〈보기〉의 단어를 활용해 한 문장으로 영작하시오.</div><div class="lq-meta"><span class="lq-band">조건 영작</span><span class="seo-badge">내신 핵심</span></div></div></div>
+                </div>
+                <div class="lo-foot"><span class="arr">→</span> 학생은 교재로 예습하고, 같은 지문의 <b>객관식·서술형 문항</b>을 앱에서 바로 풉니다.</div>
+              </div>
+            </div>
+
+            <!-- 변형 -->
+            <div class="panel" id="p-lx">
+              <p class="lede">기존 <b>수능·모의고사 지문</b> 한 개를 넣으면, 논지 구조는 유지한 채 <b>내신 난이도</b>로 변형합니다. 같은 뼈대에서 표준판·고난도판을 함께 만듭니다.</p>
+              <div class="frame-note"><span class="k">왜 변형인가</span><span>학교 시험은 출처를 밝히기 어려운 변형 문항이 핵심입니다. 보유 지문을 합법적으로 재가공해 내신 대비 자산으로 바꿉니다.</span></div>
+
+              <div class="variant-source">
+                <span class="label">원본 지문 <span class="doc-tag">수능 6월 모평 · 빈칸</span></span>
+                <p class="src-en">The dependent and shifting nature of art values, not only on the market but inherently, is uppermost in the mind of today's art collector, whether he buys for himself or as the representative of an institution. Acquiring a work is acquiring a piece of art history, or it is acquiring nothing. In signing his check the collector asserts his belief in the future presence of the work as a significant point attained by art as a whole. History, however, is open to anything and the merit of the chosen painting or sculpture has — at best — only the validation of a present-day consensus. This consensus is all but certain to be displaced, as others have been in the past. In the last analysis, committing himself to a painting is the collector's own act. Through it he courageously affirms not only his aesthetic judgment, from whatever source it be derived, but the conviction that he can predict where art is going.</p>
+              </div>
+
+              <div class="skeleton">
+                <div class="sk-h">공유 논지 뼈대 — 두 변형판이 같은 구조를 따릅니다</div>
+                <div class="sk-step"><span class="sn">1</span>가치 평가는 당대의 합의에 기댈 뿐이다</div>
+                <div class="sk-step"><span class="sn">2</span>그 합의는 세대마다 교체되어 왔다</div>
+                <div class="sk-step"><span class="sn">3</span>그럼에도 '선택'은 미래의 위상을 주장하는 행위다</div>
+                <div class="sk-step"><span class="sn">4</span>현재의 어떤 것도 그 주장을 보증하지 못한다</div>
+                <div class="sk-step"><span class="sn">5</span>그러므로 선택은 결국 행위자 자신의 행위다</div>
+                <div class="sk-step blank"><span class="sn">∎</span>빈칸: 미래를 내다볼 수 있다는 확신</div>
+              </div>
+
+              <span class="label">변형 결과</span>
+              <div class="diff-toggle">
+                <button class="dt on" data-v="std" onclick="showVariant('std')">표준판 · 2점</button>
+                <button class="dt" data-v="hard" onclick="showVariant('hard')">고난도판 · 3점</button>
+              </div>
+
+              <div id="var-std" style="display:block;">
+                <div class="variant-out">
+                  <div class="vo-bar"><span class="lvl">표준판</span><span class="pts">소재: 건축 보존위원회 · 예측 정답률 55%</span></div>
+                  <div class="vo-body">
+                    <p class="v-en">Assessments of which buildings deserve to endure have shifted in every generation. Monuments one era protects, a later era dismisses as imitation, and structures once condemned as eyesores enter the canon of architecture. Whatever merit a building is granted rests, at best, on a present-day consensus, and every consensus of this kind has in time given way to another. Members of preservation boards know this instability well, whether they rule on a private petition or a public landmark. To list a building is to claim for it a place in architectural history, or to claim nothing beyond shelter and sentiment. An approved listing asserts a belief about the future: that the building will hold a significant place in architecture as a whole. No present consensus can underwrite such an assertion; the listing is, in the end, the board's own act. Through it the members affirm not only their architectural judgment, from whatever training it derives, but the conviction that ____________.</p>
+                    <ul class="v-opts">
+                      <li><span class="vc">①</span> the present-day consensus will secure the building's merit for good</li>
+                      <li><span class="vc">②</span> a building's significance is fixed by its architect's original intent</li>
+                      <li class="ans"><span class="vc">③</span> they can foresee the direction architecture will take <span class="tagn">정답</span></li>
+                      <li><span class="vc">④</span> the listing will raise the building's economic value at once</li>
+                      <li><span class="vc">⑤</span> future generations are bound to honour the judgments of the past</li>
+                    </ul>
+                    <div class="vo-meta"><span>모티브 <b>Lowenthal (1985)</b></span><span>변형 강도 <b>중</b></span><span>빈칸 위치 <b>결론부</b></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div id="var-hard" style="display:none;">
+                <div class="variant-out">
+                  <div class="vo-bar"><span class="lvl">고난도판</span><span class="pts">소재: 무명작가·출판 · 예측 정답률 38%</span></div>
+                  <div class="vo-body">
+                    <p class="v-en">A manuscript by an unknown writer is, in itself, so much printed paper. What makes it literature is a belief that no quality of the text can compel — a belief the world of letters grants, withholds, and revises. A publisher who takes on such a writer therefore does more than circulate a book: he lends the author his name, and with the name the whole credit it has come to carry. To publish the unknown is to claim for the work a place in literature, or to claim nothing beyond paper and print; and because recognition arrives late, if it arrives at all, nothing in the present can secure the claim. A book may sell at once and still count for nothing. The credit staked is the publisher's own, forfeited if he has backed the wrong writer; and in staking it he asserts not his taste alone, from wherever it was formed, but the conviction that ____________.</p>
+                    <ul class="v-opts">
+                      <li><span class="vc">①</span> the merit of the work will in time compel the recognition it deserves</li>
+                      <li><span class="vc">②</span> posterity is bound to honour the credit he has advanced</li>
+                      <li><span class="vc">③</span> his name by itself can settle the standing of what he publishes</li>
+                      <li><span class="vc">④</span> a well-formed taste protects him from backing the wrong writer</li>
+                      <li class="ans"><span class="vc">⑤</span> he can foresee the course that literature will take <span class="tagn">정답</span></li>
+                    </ul>
+                    <div class="vo-meta"><span>모티브 <b>Bourdieu (1980)</b></span><span>변형 강도 <b>상 (전면 변형)</b></span><span>빈칸 위치 <b>결론부</b></span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- F2 -->
+            <div class="panel" id="p-f2">
+              <p class="lede">보유 지문이 없을 때는 <b>주제와 난이도만 지정</b>하면 지문까지 새로 생성합니다. 빈 곳을 채우는 용도입니다.</p>
+              <div class="f2-row">
+                <div class="f2-col">
+                  <span class="label">생성 조건</span>
+                  <div class="f2-input">주제 = 생태계 · 동물 행동<br>유형 = 주제 추론<br>난이도 = 중상 (고2)<br>길이 = 130 단어</div>
+                  <div class="btn-row"><button class="btn" style="background:var(--f2); color:#fff;" onclick="genF2()">⚙ 지문·문항 생성</button></div>
+                </div>
+                <div class="f2-col">
+                  <div class="f2-gen" id="f2gen">
+                    <div class="gl">생성된 지문</div>
+                    <p class="gtxt">Animals differ sharply in how they meet the demands of survival. Some rely on fixed, inborn routines that need no learning, while others adjust their behavior to changing surroundings, weighing options before they act. Which path an animal takes is shaped less by chance than by the length of the life it can expect to live.</p>
+                    <div class="gmeta">예측 정답률 58% · 검증 4단계 통과 · 신규 생성</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · CARD ② -->
+    <section class="screen center student" id="sc-card2">
+      <div class="card">
+        <div class="card-num">②</div>
+        <div class="card-act">PART 2 · 학생의 경험</div>
+        <h2>학생이 직접 푼다</h2>
+        <p class="cline">방금 만든 문항이 그대로 학생 앱으로. 여기서부터는 학생이 보는 화면입니다.</p>
+        <div class="chip-tip">🎮 풀이 · 코칭 · 해설 · 리포트가 하나의 앱에서</div>
+      </div>
+    </section>
+
+    <!-- 4 · SOLVE -->
+    <section class="screen student" id="sc-solve">
+      <div class="app">
+        <div class="app-bar">
+          <div class="who"><span class="ava">민</span><div><b>민서</b><span class="lv">Lv.5</span></div></div>
+          <div class="xp-wrap"><div class="xp-top"><span>XP</span><span><b class="js-xp">240</b> / 300</span></div><div class="xp-track"><i class="js-xpfill" style="width:80%"></i></div></div>
+          <div class="streak">🔥 <b class="js-streak">6</b></div>
+        </div>
+        <div class="app-body">
+          <p class="route-passage">A telescoping of time correlates with size. Small animals' reflexes must be quicker in order to control much smaller limbs and respond to rapid locomotor feedback. Further, decision making must be streamlined in small species because their high metabolic rates and minimal energy reserves offer few choices in food-searching activities, defending against predators, or mating behaviors. And, perhaps most important, a short lifetime offers little time for learning from experience. As a result, being short-lived puts a premium on the effectiveness of preprogrammed behavior patterns that require little in the way of environmental fine-tuning. Large animals, in comparison, can get by with rather slower reflexes, can afford to vary their mating and food-searching behaviors in an effort to better optimize their behaviors, and may have a considerable opportunity to learn by observation and trial and error. Being longer-lived puts a greater premium on learning and memory, and less on automatic preprogrammed behaviors. In addition, living a long time or having the capacity to travel for long distances is more likely to expose an animal to significant changes in the environment.</p>
+          <p class="stem">다음 글의 주제로 가장 적절한 것은?</p>
+          <div class="options" id="optList">
+            <button class="opt" data-i="1" onclick="pick(1)"><span class="oc">①</span> chances of survival for animals with different time perceptions</button>
+            <button class="opt" data-i="2" onclick="pick(2)"><span class="oc">②</span> significance of animal size in life spans and survival skills</button>
+            <button class="opt" data-i="3" onclick="pick(3)"><span class="oc">③</span> benefits of energy reserves in animals' environmental adaptation</button>
+            <button class="opt" data-i="4" onclick="pick(4)"><span class="oc">④</span> limits of animals' decision making according to body size</button>
+            <button class="opt" data-i="5" onclick="pick(5)"><span class="oc">⑤</span> influences of predetermined behavior patterns on animal survival</button>
+          </div>
+          <div class="solve-fb" id="solveFb">선택지를 눌러 채점해 보세요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · CARD ③ -->
+    <section class="screen center student" id="sc-card3">
+      <div class="card">
+        <div class="card-num">③</div>
+        <div class="card-act">PART 2 · 학생의 경험</div>
+        <h2>그런데, 막혔을 때는?</h2>
+        <p class="cline">답을 알려주는 대신, 길을 알려줍니다. AI 튜터는 정답 번호를 절대 말하지 않습니다.</p>
+        <div class="chip-tip">🧭 방향 → 뼈대 → 함정, 단계별 힌트</div>
+      </div>
+    </section>
+
+    <!-- 6 · TUTOR -->
+    <section class="screen student" id="sc-tutor">
+      <div class="app">
+        <div class="app-bar">
+          <div class="who"><span class="ava">민</span><div><b>민서</b><span class="lv">Lv.5</span></div></div>
+          <div class="xp-wrap"><div class="xp-top"><span>XP</span><span><b class="js-xp">240</b> / 300</span></div><div class="xp-track"><i class="js-xpfill" style="width:80%"></i></div></div>
+          <div class="streak">🔥 <b class="js-streak">6</b></div>
+        </div>
+        <div class="app-body">
+          <div class="tutor-head"><span class="ico">🧭</span><div><b>AI 학습 튜터</b><div class="s">정답이 아니라 풀이의 길을 안내합니다</div></div></div>
+
+          <div class="tmsg student"><span class="av">민</span><div class="bubble">④번이랑 ②번 사이에서 계속 헷갈려요. 둘 다 몸 크기 얘기 같은데...</div></div>
+
+          <div class="tmsg ai"><span class="av">AI</span><div class="bubble"><div class="hint-label"><span class="step">힌트 1</span> 방향</div>먼저 글 전체가 무엇을 '대조'하는지 봐요. 작은 동물과 큰 동물을 가르는 기준이 딱 하나 있어요. 그 기준이 본능을 쓸지 학습을 쓸지를 결정하죠. 그 출발점이 무엇일까요?</div></div>
+
+          <div class="tmsg ai hidden" id="h2"><span class="av">AI</span><div class="bubble"><div class="hint-label"><span class="step">힌트 2</span> 뼈대</div>핵심 문장 두 개를 찾았나요? "being short-lived puts a premium on preprogrammed behavior"와 "being longer-lived puts a greater premium on learning and memory". 둘 다 출발점이 '수명'이에요. 그리고 수명을 정하는 건 몸 크기죠. 그럼 주제는 '몸 크기'에서 시작해야 할까요, '의사결정'에서 시작해야 할까요?</div></div>
+
+          <div class="tmsg ai hidden" id="h3"><span class="av">AI</span><div class="bubble"><div class="hint-label"><span class="step">힌트 3</span> 함정</div>④번은 'decision making(의사결정)'만 콕 집었어요. 그런데 의사결정은 글에서 여러 근거 중 하나일 뿐이에요. 정답은 몸 크기 → 수명 → 생존 방식을 모두 담아야 하죠. 이제 ②번과 ④번을 다시 비교해 보세요. 어느 쪽이 글 전체를 덮나요?</div></div>
+
+          <div class="tutor-foot">
+            <button class="more-btn" id="moreBtn" onclick="moreHint()">더 도와주세요 →</button>
+            <span style="font-size:12.5px; color:var(--grey);">학생이 원할 때만 다음 힌트가 열립니다.</span>
+          </div>
+
+          <div class="tutor-principle"><span class="k">설계 원칙</span><span>튜터는 정답 번호를 말하지 않습니다. 한국 시험 문화에서 '대신 풀어주는' 도구는 신뢰를 잃습니다 — 코치이지 대필가가 아닙니다.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 · CARD ④ -->
+    <section class="screen center student" id="sc-card4">
+      <div class="card">
+        <div class="card-num">④</div>
+        <div class="card-act">PART 2 · 학생의 경험</div>
+        <h2>채점이 아니라 가르친다</h2>
+        <p class="cline">정답만 확인하고 끝나지 않습니다. 지문을 한 문장씩 분해하고, 왜 틀렸는지까지 설명합니다.</p>
+        <div class="chip-tip">📖 정답·흐름 · 지문 분해 · 오답 분석 · 어휘·문법</div>
+      </div>
+    </section>
+
+    <!-- 8 · HAESEOL -->
+    <section class="screen student" id="sc-haeseol">
+      <div class="app">
+        <div class="app-bar">
+          <div class="who"><span class="ava">민</span><div><b>민서</b><span class="lv">Lv.5</span></div></div>
+          <div class="xp-wrap"><div class="xp-top"><span>XP</span><span><b class="js-xp">240</b> / 300</span></div><div class="xp-track"><i class="js-xpfill" style="width:80%"></i></div></div>
+          <div class="streak">🔥 <b class="js-streak">6</b></div>
+        </div>
+        <div class="app-body">
+          <div class="hs-head"><span class="burg">해설</span><div><b>Q23 · 주제 추론</b><div class="s">정답 ② · 예측 정답률 61%</div></div></div>
+
+          <div class="hs-tabs">
+            <button class="hs-tab active" onclick="hsTab(0,this)">정답·흐름</button>
+            <button class="hs-tab" onclick="hsTab(1,this)">지문 분해 · PLEW</button>
+            <button class="hs-tab" onclick="hsTab(2,this)">오답 분석</button>
+            <button class="hs-tab" onclick="hsTab(3,this)">어휘·문법</button>
+          </div>
+
+          <!-- 0 정답·흐름 -->
+          <div class="hs-panel show" data-hs="0">
+            <div class="oneliner"><span class="badge">②</span><p>동물의 <b>몸 크기</b>가 <b>수명</b>을 정하고, 그 수명이 다시 <b>생존 방식</b>(본능이냐 학습·기억이냐)을 정합니다. 따라서 두 축을 모두 담은 ②가 주제입니다.</p></div>
+
+            <div class="block-label">한눈에 보는 흐름</div>
+            <div class="flow">
+              <div class="flow-path big"><span class="who2">큰 동물</span><span class="step">오래 산다</span><span class="arr">→</span><span class="step">느린 반응 · 다양한 시도</span><span class="arr">→</span><span class="step">학습 · 기억</span><span class="arr">→</span><span class="step">생존</span></div>
+              <div class="flow-path small"><span class="who2">작은 동물</span><span class="step">짧게 산다</span><span class="arr">→</span><span class="step">빠른 반응 · 빠른 판단</span><span class="arr">→</span><span class="step">본능적 행동</span><span class="arr">→</span><span class="step">생존</span></div>
+            </div>
+            <p class="flow-cap">두 줄을 가르는 단 하나의 출발점: <b>몸 크기 → 수명</b>. 정답은 이 출발점을 포함해야 합니다.</p>
+
+            <div class="block-label">정답 해설</div>
+            <div class="explain">
+              <p>전반부는 <b>작은 동물</b>을 다룹니다. 몸이 작아 빠른 반응과 빠른 판단이 필요하고, 수명이 짧아 경험으로 배울 시간이 없습니다. 그래서 미리 짜인 <b>본능적 행동</b>에 의존하게 됩니다.</p>
+              <p>후반부는 <b>큰 동물</b>로 대조됩니다. 느린 반응으로도 살 수 있고, 행동을 다양하게 시도할 여유가 있으며, 오래 살기에 관찰과 시행착오로 <b>학습하고 기억</b>합니다.</p>
+              <p>결국 글은 '몸 크기 → 수명 → (본능 vs 학습) 생존 방식'이라는 하나의 인과를 양방향으로 보여줍니다. 이 전체를 포괄하는 선지는 ②뿐입니다.</p>
+            </div>
+          </div>
+
+          <!-- 1 지문 분해 -->
+          <div class="hs-panel" data-hs="1">
+            <p class="flow-cap" style="margin-bottom:18px;">문장을 <b>쉬운 영어 → 한국어 → 구조</b>로 분해합니다. 회색 취소선은 <b>몰라도 답이 바뀌지 않는 부분</b>, 파란 칸은 <span class="plew pl-P"><span class="g">P</span></span> <b>핵심 문장</b>입니다.</p>
+            <div class="breakdown">
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">A telescoping of time correlates with size.</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>How fast time feels is linked to an animal's size.</div>
+                  <div class="bd-ko"><span class="t">KR</span>시간이 흐르는 속도(체감)는 몸 크기와 연결된다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>주제 문장 — 크기 ↔ 시간 감각</div>
+                </div>
+              </div>
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">Small animals' reflexes must be quicker <span class="strike">in order to control much smaller limbs and respond to rapid locomotor feedback.</span></span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>Small animals need faster reflexes.</div>
+                  <div class="bd-ko"><span class="t">KR</span>작은 동물은 반응이 더 빨라야 한다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>근거 ① — 작은 동물의 빠른 반응</div>
+                </div>
+              </div>
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">Further, decision making must be streamlined in small species <span class="strike">because their high metabolic rates and minimal energy reserves offer few choices in food-searching activities, defending against predators, or mating behaviors.</span></span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>Small animals must also decide quickly and simply.</div>
+                  <div class="bd-ko"><span class="t">KR</span>작은 동물은 판단도 빠르고 단순해야 한다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>근거 ② — 빠른 의사결정</div>
+                </div>
+              </div>
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">And, perhaps most important, a short lifetime offers little time for learning from experience.</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>A short life leaves little time to learn.</div>
+                  <div class="bd-ko"><span class="t">KR</span>짧은 수명은 경험에서 배울 시간이 거의 없다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>연결 — 짧은 수명 → 학습 시간 부족</div>
+                </div>
+              </div>
+
+              <div class="bd key">
+                <div class="bd-top"><span class="plew pl-P"><span class="g">P</span><span class="pn">목적</span></span><span class="bd-en">As a result, being short-lived puts a premium on the effectiveness of preprogrammed behavior patterns that require little in the way of environmental fine-tuning.</span><span class="key-tag">핵심</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>So short-lived animals rely on built-in behavior.</div>
+                  <div class="bd-ko"><span class="t">KR</span>그래서 수명이 짧을수록 '본능적 행동'이 더 중요해진다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>핵심 결론 ① — 짧은 수명 → 본능 중시</div>
+                </div>
+              </div>
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">Large animals, in comparison, can get by with rather slower reflexes, can afford to vary their mating and food-searching behaviors <span class="strike">in an effort to better optimize their behaviors</span>, and may have a considerable opportunity to learn by observation and trial and error.</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>Big animals can be slower and can learn by trying.</div>
+                  <div class="bd-ko"><span class="t">KR</span>큰 동물은 반응이 느려도 되고, 다양하게 시도하며 배운다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>대조 — 큰 동물의 여유 (반응·시도·학습 나열)</div>
+                </div>
+              </div>
+
+              <div class="bd key">
+                <div class="bd-top"><span class="plew pl-P"><span class="g">P</span><span class="pn">목적</span></span><span class="bd-en">Being longer-lived puts a greater premium on learning and memory, and less on automatic preprogrammed behaviors.</span><span class="key-tag">핵심</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>Long-lived animals rely more on learning than instinct.</div>
+                  <div class="bd-ko"><span class="t">KR</span>큰 동물에게는 본능보다 '학습과 기억'이 더 중요하다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>핵심 결론 ② — 긴 수명 → 학습 중시</div>
+                </div>
+              </div>
+
+              <div class="bd">
+                <div class="bd-top"><span class="bd-en">In addition, living a long time or having the capacity to travel for long distances is more likely to expose an animal to significant changes in the environment.</span></div>
+                <div class="bd-lines">
+                  <div class="bd-easy"><span class="t">EASY</span>Living long or traveling far means facing more change.</div>
+                  <div class="bd-ko"><span class="t">KR</span>오래 살거나 멀리 이동할수록 더 다양한 환경을 겪는다.</div>
+                  <div class="bd-struct"><span class="t">구조</span>보강 — 긴 수명·이동 → 다양한 환경</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- 2 오답 분석 -->
+          <div class="hs-panel" data-hs="2">
+            <p class="flow-cap" style="margin-bottom:18px;">각 선지가 <b>왜 매력적인지</b>, 그리고 <b>어디서 어긋나는지</b>를 짚습니다.</p>
+            <div class="wrong-list">
+              <div class="wrong-item">
+                <span class="oc">①</span>
+                <div class="wi-body"><div class="wi-top"><span class="wi-opt">chances of survival for animals with different time perceptions</span><span class="trap-pill">관계 오인</span></div><div class="wi-why">글은 생존의 '확률(chances)'이 아니라 생존의 '방식'을 다룹니다. 시간 감각은 원인일 뿐, 확률을 주제로 삼지 않았습니다.</div></div>
+              </div>
+              <div class="wrong-item ans">
+                <span class="oc">②</span>
+                <div class="wi-body"><div class="wi-top"><span class="wi-opt">significance of animal size in life spans and survival skills</span><span class="trap-pill ans">정답</span></div><div class="wi-why">'몸 크기 → 수명 → 생존 기술'의 두 축을 모두 포괄합니다. 글 전체를 덮는 유일한 선지입니다.</div></div>
+              </div>
+              <div class="wrong-item">
+                <span class="oc">③</span>
+                <div class="wi-body"><div class="wi-top"><span class="wi-opt">benefits of energy reserves in animals' environmental adaptation</span><span class="trap-pill">과잉 추론</span></div><div class="wi-why">에너지 비축은 작은 동물을 설명하는 지엽적 근거일 뿐입니다. 글은 '이점(benefits)'을 주장하는 설득문이 아니라 설명문입니다.</div></div>
+              </div>
+              <div class="wrong-item">
+                <span class="oc">④</span>
+                <div class="wi-body"><div class="wi-top"><span class="wi-opt">limits of animals' decision making according to body size</span><span class="trap-pill most">범위 축소 · 최다 오답</span></div><div class="wi-why">의사결정은 여러 근거 중 하나일 뿐입니다. '수명'과 '학습 vs 본능'이라는 더 큰 축을 빠뜨려 범위가 좁습니다.</div></div>
+              </div>
+              <div class="wrong-item">
+                <span class="oc">⑤</span>
+                <div class="wi-body"><div class="wi-top"><span class="wi-opt">influences of predetermined behavior patterns on animal survival</span><span class="trap-pill">부분 일치</span></div><div class="wi-why">'본능적 행동'은 작은 동물에만 해당합니다. 큰 동물의 '학습·기억'을 담지 못해 절반만 맞습니다.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 어휘·문법 -->
+          <div class="hs-panel" data-hs="3">
+            <div class="block-label" style="margin-top:6px;">핵심 어휘</div>
+            <table class="vg-table">
+              <tr><td class="w">telescoping</td><td class="syn">= compression</td><td class="mn">단축 · 압축</td></tr>
+              <tr><td class="w">correlate with</td><td class="syn">= be linked to</td><td class="mn">~와 관련되다</td></tr>
+              <tr><td class="w">streamlined</td><td class="syn">= simplified</td><td class="mn">간결해진</td></tr>
+              <tr><td class="w">put a premium on</td><td class="syn">= value highly</td><td class="mn">~을 중시하다</td></tr>
+              <tr><td class="w">preprogrammed</td><td class="syn">= built-in</td><td class="mn">미리 짜인</td></tr>
+              <tr><td class="w">fine-tuning</td><td class="syn">= adjustment</td><td class="mn">미세 조정</td></tr>
+              <tr><td class="w">get by with</td><td class="syn">= manage with</td><td class="mn">~로 충분하다</td></tr>
+              <tr><td class="w">considerable</td><td class="syn">= significant</td><td class="mn">상당한</td></tr>
+              <tr><td class="w">trial and error</td><td class="syn">= trying repeatedly</td><td class="mn">시행착오</td></tr>
+            </table>
+
+            <div class="block-label">짚어둘 문법</div>
+            <div class="gram-list">
+              <div class="gram-item"><span class="gk">동명사구 주어</span><span class="gv">Being short-lived puts... — 동명사구가 문장 전체의 주어로 쓰였습니다.</span></div>
+              <div class="gram-item"><span class="gk">put a premium on ~</span><span class="gv">'~을 중시하다'. 글의 핵심 논지를 잇는 표현으로 두 번 반복됩니다.</span></div>
+              <div class="gram-item"><span class="gk">관계대명사 that</span><span class="gv">...patterns that require... — 앞의 명사(behavior patterns)를 수식합니다.</span></div>
+              <div class="gram-item"><span class="gk">can afford to + 동사</span><span class="gv">'~할 여유가 있다'. 큰 동물의 여유를 드러내는 표현입니다.</span></div>
+            </div>
+          </div>
+
+          <div class="hs-foot">
+            <button class="btn btn-green" id="hsGotBtn" onclick="haeseolGot(this)">이해했어요 ✓</button>
+            <span class="got-msg" id="hsGotMsg">좋아요! 오늘도 한 문제 정복 🙌 &nbsp;+5 XP</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9 · CARD ⑤ -->
+    <section class="screen center student" id="sc-card5">
+      <div class="card">
+        <div class="card-num">⑤</div>
+        <div class="card-act">PART 2 · 학생의 경험</div>
+        <h2>약점을 짚어낸다</h2>
+        <p class="cline">한 문제가 아니라 한 세트를 풀고 나면, 무엇을 왜 틀리는지 패턴으로 보여줍니다.</p>
+        <div class="chip-tip">📊 유형별 정답률 · 오답 패턴 · 다시 볼 어휘</div>
+      </div>
+    </section>
+
+    <!-- 10 · REPORT -->
+    <section class="screen student" id="sc-report">
+      <div class="app">
+        <div class="app-bar">
+          <div class="who"><span class="ava">민</span><div><b>민서</b><span class="lv">Lv.5</span></div></div>
+          <div class="xp-wrap"><div class="xp-top"><span>XP</span><span><b class="js-xp">240</b> / 300</span></div><div class="xp-track"><i class="js-xpfill" style="width:80%"></i></div></div>
+          <div class="streak">🔥 <b class="js-streak">6</b></div>
+        </div>
+        <div class="app-body">
+          <div class="rep-head">
+            <div class="rep-score"><span id="repScoreNum">0</span><span class="u">/100</span></div>
+            <span class="rep-grade">3등급</span>
+            <div class="rep-xp">이번 세트 <b>+<span id="repXpNum">0</span> XP</b> 🔥<br>연속 7일 · 상위 30%</div>
+          </div>
+
+          <div class="bands">
+            <div class="band"><div class="bn">5등급</div><div class="br">50–59</div></div>
+            <div class="band"><div class="bn">4등급</div><div class="br">60–69</div></div>
+            <div class="band cur"><div class="bn">3등급</div><div class="br">70–79</div></div>
+            <div class="band"><div class="bn">2등급</div><div class="br">80–89</div></div>
+            <div class="band"><div class="bn">1등급</div><div class="br">90–100</div></div>
+          </div>
+          <p class="band-cap">현재 <b>73점 · 3등급</b> · 2등급까지 <b>7점</b> 남았어요.</p>
+
+          <div class="block-label">유형별 정답률</div>
+          <div class="typebars">
+            <div class="tbar"><span class="tn">세부 정보</span><div class="track"><i class="fill" data-w="100%" style="background:var(--green)"></i></div><span class="pct">5/5</span></div>
+            <div class="tbar"><span class="tn">글의 구조</span><div class="track"><i class="fill" data-w="71%" style="background:var(--green)"></i></div><span class="pct">5/7</span></div>
+            <div class="tbar"><span class="tn">대의 파악</span><div class="track"><i class="fill" data-w="67%" style="background:var(--amber)"></i></div><span class="pct">4/6</span></div>
+            <div class="tbar"><span class="tn">어법·어휘</span><div class="track"><i class="fill" data-w="33%" style="background:var(--red)"></i></div><span class="pct">1/3</span></div>
+            <div class="tbar"><span class="tn">추론·빈칸</span><div class="track"><i class="fill" data-w="20%" style="background:var(--red)"></i></div><span class="pct">1/5</span></div>
+          </div>
+
+          <div class="diagnosis">
+            <div class="dh">약점 진단 · 오답 패턴</div>
+            <p class="dmain">틀린 10문제 중 <b>4개(21 · 31 · 33 · 34번)</b>에서 지문에 나온 단어를 그대로 쓴 선지를 골랐어요. 정답은 모두 <b>다른 말로 바꿔 표현</b>한 선지였습니다.</p>
+            <div class="dfix"><span class="k">해결법</span> &nbsp;빈칸·함의·요약 문제의 정답은 거의 항상 '다른 말로 바꾼' 선지예요. 고르기 전에 "이거 지문 단어를 그대로 따라했나?"를 확인하고, 그대로 따라한 선지부터 지우세요.</div>
+          </div>
+
+          <div class="block-label">틀린 문제 (10)</div>
+          <table class="wrong-table">
+            <thead><tr><th>문항</th><th>유형</th><th>내 답</th><th>정답</th><th>정답률</th><th>오답 원인</th></tr></thead>
+            <tbody>
+              <tr><td class="num">20</td><td>주장</td><td class="mv">④</td><td class="num">③</td><td class="num">58%</td><td>지나친 단정</td></tr>
+              <tr><td class="num">21</td><td>함의</td><td class="mv">⑤</td><td class="num">①</td><td class="num">41%</td><td class="star">단어 반복 ★</td></tr>
+              <tr><td class="num">24</td><td>제목</td><td class="mv">③</td><td class="num">⑤</td><td class="num">62%</td><td>절반만 읽음</td></tr>
+              <tr><td class="num">30</td><td>어휘</td><td class="mv">②</td><td class="num">④</td><td class="num">71%</td><td>급하게</td></tr>
+              <tr><td class="num">31</td><td>빈칸</td><td class="mv">④</td><td class="num">③</td><td class="num">38%</td><td class="star">단어 반복 ★</td></tr>
+              <tr><td class="num">33</td><td>빈칸</td><td class="mv">②</td><td class="num">④</td><td class="num">55%</td><td class="star">단어 반복 ★</td></tr>
+              <tr><td class="num">34</td><td>빈칸</td><td class="mv">⑤</td><td class="num">③</td><td class="num">49%</td><td class="star">단어 반복 ★</td></tr>
+              <tr><td class="num">39</td><td>삽입</td><td class="mv">②</td><td class="num">③</td><td class="num">44%</td><td>위치 한 칸</td></tr>
+              <tr><td class="num">40</td><td>요약</td><td class="mv">②</td><td class="num">①</td><td class="num">60%</td><td>절반만</td></tr>
+              <tr><td class="num">42</td><td>어휘</td><td class="mv">④</td><td class="num">⑤</td><td class="num">66%</td><td>급하게</td></tr>
+            </tbody>
+          </table>
+
+          <div class="block-label">다시 볼 어휘 (16)</div>
+          <div class="vocab-grid">
+            <div class="vchip"><span class="vw">override</span><span class="vm">무효화하다</span></div>
+            <div class="vchip"><span class="vw">reinforce ↔ erode</span><span class="vm">강화 ↔ 약화</span></div>
+            <div class="vchip"><span class="vw">predicated on</span><span class="vm">~에 기반한</span></div>
+            <div class="vchip"><span class="vw">estrangement</span><span class="vm">소외</span></div>
+            <div class="vchip"><span class="vw">quantitative</span><span class="vm">양적인</span></div>
+            <div class="vchip"><span class="vw">constituent</span><span class="vm">구성 요소</span></div>
+            <div class="vchip"><span class="vw">deliberation</span><span class="vm">숙고</span></div>
+            <div class="vchip"><span class="vw">scarcity</span><span class="vm">부족 · 희소성</span></div>
+            <div class="vchip"><span class="vw">anomaly</span><span class="vm">변칙 · 이례</span></div>
+            <div class="vchip"><span class="vw">reciprocation</span><span class="vm">상호 작용</span></div>
+            <div class="vchip"><span class="vw">tacit</span><span class="vm">암묵적인</span></div>
+            <div class="vchip"><span class="vw">threshold</span><span class="vm">문턱 · 기준점</span></div>
+            <div class="vchip"><span class="vw">construe</span><span class="vm">해석하다</span></div>
+            <div class="vchip"><span class="vw">overstate</span><span class="vm">과장하다</span></div>
+            <div class="vchip"><span class="vw">extrinsic ↔ intrinsic</span><span class="vm">외재 ↔ 내재</span></div>
+            <div class="vchip"><span class="vw">demote ↔ elevate</span><span class="vm">강등 ↔ 격상</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="nav" id="nav">
+    <button class="btn btn-ghost" id="btnPrev">← 이전</button>
+    <span class="hint"><span class="key">←</span><span class="key">→</span> 또는 클릭으로 이동</span>
+    <button class="btn btn-primary" id="btnNext">다음 →</button>
+  </nav>
+</div>
+
+<script>
+var SCREENS=[
+  {id:'sc-cover',  act:0},
+  {id:'sc-card1',  act:1},
+  {id:'sc-intake', act:1},
+  {id:'sc-card2',  act:2},
+  {id:'sc-solve',  act:2},
+  {id:'sc-card3',  act:2},
+  {id:'sc-tutor',  act:2},
+  {id:'sc-card4',  act:2},
+  {id:'sc-haeseol',act:2},
+  {id:'sc-card5',  act:2},
+  {id:'sc-report', act:2}
+];
+var cur=0;
+var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- navigation ---------- */
+function goTo(i){ cur=Math.max(0, Math.min(SCREENS.length-1, i)); render(); }
+function go(d){ goTo(cur+d); }
+
+function render(){
+  SCREENS.forEach(function(s,i){ var el=document.getElementById(s.id); if(el) el.classList.toggle('active', i===cur); });
+  var s=SCREENS[cur];
+  var active=document.getElementById(s.id); if(active) active.scrollTop=0;
+  var tb=document.getElementById('topbar'); tb.style.display = (s.act===0)?'none':'flex';
+  var a1=document.getElementById('act1lbl'), a2=document.getElementById('act2lbl');
+  a1.classList.remove('on','done'); a2.classList.remove('on','done');
+  if(s.act===1) a1.classList.add('on');
+  if(s.act===2) a2.classList.add('on');
+  if(cur>2) a1.classList.add('done');
+  if(cur>10) a2.classList.add('done');
+  var p=0; if(cur>=1 && cur<=10) p=((cur-1)/9)*100; else if(cur>10) p=100;
+  document.getElementById('pfill').style.width=p+'%';
+  var prev=document.getElementById('btnPrev'), next=document.getElementById('btnNext');
+  prev.style.visibility=(cur===0)?'hidden':'visible';
+  if(s.id==='sc-cover'){ next.textContent='데모 시작 →'; next.className='btn btn-primary big'; }
+  else if(cur===SCREENS.length-1){ next.textContent='처음으로 ↺'; next.className='btn btn-ghost'; }
+  else { next.textContent='다음 →'; next.className='btn btn-primary'; }
+  onEnter(s.id);
+}
+function onEnter(id){
+  syncXP();
+  if(id==='sc-solve') resetSolve();
+  if(id==='sc-tutor') resetTutor();
+  if(id==='sc-haeseol') resetHaeseol();
+  if(id==='sc-report') animateReport();
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('btnNext').addEventListener('click', function(){ if(cur===SCREENS.length-1) goTo(0); else go(1); });
+  document.getElementById('btnPrev').addEventListener('click', function(){ go(-1); });
+  document.getElementById('act1lbl').addEventListener('click', function(){ goTo(1); });
+  document.getElementById('act2lbl').addEventListener('click', function(){ goTo(3); });
+  sizeFx(); goTo(0);
+});
+document.addEventListener('keydown', function(e){
+  var t=(e.target.tagName||'').toUpperCase(); if(t==='INPUT'||t==='TEXTAREA') return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); if(cur<SCREENS.length-1) go(1); }
+  else if(e.key==='ArrowLeft'||e.key==='ArrowUp'||e.key==='PageUp'){ e.preventDefault(); go(-1); }
+  else if(e.key==='Home'){ e.preventDefault(); goTo(0); }
+});
+
+/* ---------- XP / streak ---------- */
+var XP=240, NEXT=300, STREAK=6;
+function syncXP(){
+  document.querySelectorAll('.js-xp').forEach(function(e){e.textContent=XP;});
+  document.querySelectorAll('.js-xpfill').forEach(function(e){e.style.width=Math.min(100,XP/NEXT*100)+'%';});
+  document.querySelectorAll('.js-streak').forEach(function(e){e.textContent=STREAK;});
+}
+function addXP(n){ XP=Math.min(NEXT-2, XP+n); syncXP(); floatXP('+'+n+' XP'); }
+function floatXP(txt){
+  var host=document.querySelector('.screen.active .xp-wrap'); if(!host) return;
+  var c=document.createElement('div'); c.className='xp-pop'; c.textContent=txt; host.appendChild(c);
+  setTimeout(function(){ if(c.parentNode) c.parentNode.removeChild(c); },1300);
+}
+
+/* ---------- confetti ---------- */
+var fx=document.getElementById('fx'), fxc=fx.getContext('2d'), parts=[], raf=null;
+function sizeFx(){ fx.width=window.innerWidth; fx.height=window.innerHeight; }
+window.addEventListener('resize', sizeFx);
+function fireConfetti(x,y,n){
+  if(reduce) return;
+  n=n||90;
+  var cols=['#2E7D5B','#C58A1D','#9B3D7A','#0E8276','#3A4FB0','#e0a3a3','#F2C14E'];
+  for(var i=0;i<n;i++){
+    var a=Math.random()*Math.PI*2, sp=4+Math.random()*7.5;
+    parts.push({x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-7,g:0.18+Math.random()*0.13,
+      s:5+Math.random()*6,r:Math.random()*6.28,vr:(-0.22+Math.random()*0.44),
+      c:cols[(Math.random()*cols.length)|0],life:64+Math.random()*46,t:0,sh:Math.random()<0.5?1:0});
+  }
+  if(!raf) raf=requestAnimationFrame(tick);
+}
+function tick(){
+  fxc.clearRect(0,0,fx.width,fx.height);
+  for(var i=parts.length-1;i>=0;i--){
+    var p=parts[i]; p.t++; p.vy+=p.g; p.x+=p.vx; p.y+=p.vy; p.r+=p.vr;
+    var al=Math.max(0,1-p.t/p.life);
+    fxc.save(); fxc.globalAlpha=al; fxc.translate(p.x,p.y); fxc.rotate(p.r); fxc.fillStyle=p.c;
+    if(p.sh) fxc.fillRect(-p.s/2,-p.s/2,p.s,p.s*0.62); else { fxc.beginPath(); fxc.arc(0,0,p.s/2,0,6.28); fxc.fill(); }
+    fxc.restore();
+    if(p.t>=p.life || p.y>fx.height+50) parts.splice(i,1);
+  }
+  if(parts.length) raf=requestAnimationFrame(tick); else { raf=null; fxc.clearRect(0,0,fx.width,fx.height); }
+}
+
+/* ---------- intake (engine) ---------- */
+var SRC={ f1:{t:'F1 · 내 콘텐츠',c:'--f1',bg:'--f1-bg'}, link:{t:'교재 연동 · eFuture 자료',c:'--green',bg:'--green-bg'}, lx:{t:'변형 · 수능 → 내신',c:'--lx',bg:'--lx-bg'}, f2:{t:'F2 · 신규 생성',c:'--f2',bg:'--f2-bg'} };
+function setTab(m){
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.toggle('active', t.dataset.mode===m);});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  var el=document.getElementById('p-'+m); if(el) el.classList.add('show');
+  var pill=document.getElementById('srcPill');
+  if(pill){ pill.textContent=SRC[m].t; pill.style.background='var('+SRC[m].bg+')'; pill.style.color='var('+SRC[m].c+')'; }
+}
+function genF1(){
+  var out=document.getElementById('f1out'); out.classList.add('reveal');
+  var bar=document.getElementById('accFill'); if(bar){ bar.style.width='0%'; setTimeout(function(){ bar.style.width='61%'; },120); }
+  var h=document.getElementById('f1hint'); if(h) h.textContent='엔진이 지문을 분석해 ‘요지’ 유형으로 문항을 만들고, 4단계 검증을 통과했습니다.';
+  setTimeout(function(){ var hd=document.getElementById('f1handoff'); if(hd) hd.style.display='flex'; },520);
+}
+function showVariant(v){
+  document.querySelectorAll('.dt').forEach(function(b){b.classList.toggle('on', b.dataset.v===v);});
+  document.getElementById('var-std').style.display = (v==='std')?'block':'none';
+  document.getElementById('var-hard').style.display = (v==='hard')?'block':'none';
+}
+function genF2(){ var g=document.getElementById('f2gen'); if(g) g.classList.add('on'); }
+function genLink(){ var el=document.getElementById('linkOut'); if(el) el.classList.add('reveal'); }
+
+/* ---------- solve ---------- */
+var solved=false;
+function pick(i){
+  var opts=document.querySelectorAll('#optList .opt');
+  var chosen=document.querySelector('#optList .opt[data-i="'+i+'"]');
+  var fb=document.getElementById('solveFb');
+  if(i===2){
+    solved=true;
+    opts.forEach(function(o){o.classList.remove('sel','wrong','shake'); var rr=o.querySelector('.res'); if(rr) rr.remove();});
+    chosen.classList.add('correct');
+    var add=document.createElement('span'); add.className='res'; add.textContent='정답'; chosen.appendChild(add);
+    STREAK=7; addXP(10);
+    var r=chosen.getBoundingClientRect();
+    fireConfetti(window.innerWidth/2, r.top+r.height/2, 120);
+    fb.className='solve-fb ok'; fb.innerHTML='정답이에요! 🎉 &nbsp;<b>+10 XP</b> &nbsp;·&nbsp; 연속 <b>7일째</b> 🔥';
+  } else {
+    chosen.classList.remove('correct'); chosen.classList.add('wrong','shake');
+    setTimeout(function(){ chosen.classList.remove('shake'); },520);
+    var old=chosen.querySelector('.res'); if(old) old.remove();
+    var x=document.createElement('span'); x.className='res no'; x.textContent='다시'; chosen.appendChild(x);
+    fb.className='solve-fb no'; fb.innerHTML='거의 다 왔어요 💪 &nbsp;막혔으면 다음 화면의 <b>AI 튜터</b>가 힌트를 줄 거예요.';
+  }
+}
+function resetSolve(){
+  solved=false;
+  document.querySelectorAll('#optList .opt').forEach(function(o){ o.classList.remove('correct','wrong','sel','shake'); var r=o.querySelector('.res'); if(r) r.remove(); });
+  var fb=document.getElementById('solveFb'); if(fb){ fb.className='solve-fb'; fb.innerHTML='선택지를 눌러 채점해 보세요.'; }
+}
+
+/* ---------- tutor ---------- */
+var hintStep=1;
+function moreHint(){
+  hintStep++;
+  if(hintStep===2){ document.getElementById('h2').classList.remove('hidden'); }
+  else if(hintStep>=3){
+    document.getElementById('h3').classList.remove('hidden');
+    var b=document.getElementById('moreBtn'); b.disabled=true; b.textContent='안내 완료 · 이제 직접 골라보세요';
+  }
+  var sc=document.getElementById('sc-tutor'); if(sc){ setTimeout(function(){ sc.scrollTop=sc.scrollHeight; },60); }
+}
+function resetTutor(){
+  hintStep=1;
+  var h2=document.getElementById('h2'), h3=document.getElementById('h3'), b=document.getElementById('moreBtn');
+  if(h2) h2.classList.add('hidden'); if(h3) h3.classList.add('hidden');
+  if(b){ b.disabled=false; b.textContent='더 도와주세요 →'; }
+}
+
+/* ---------- haeseol ---------- */
+function hsTab(i, el){
+  document.querySelectorAll('#sc-haeseol .hs-tab').forEach(function(t){t.classList.remove('active');});
+  el.classList.add('active');
+  document.querySelectorAll('#sc-haeseol .hs-panel').forEach(function(p){p.classList.toggle('show', p.getAttribute('data-hs')===String(i));});
+}
+var hsDone=false;
+function haeseolGot(btn){
+  if(hsDone) return; hsDone=true; addXP(5);
+  var r=btn.getBoundingClientRect(); fireConfetti(window.innerWidth/2, r.top, 60);
+  btn.textContent='이해 완료 ✓'; btn.disabled=true;
+  var m=document.getElementById('hsGotMsg'); if(m) m.style.display='inline';
+}
+function resetHaeseol(){
+  hsDone=false;
+  var b=document.getElementById('hsGotBtn'); if(b){ b.disabled=false; b.textContent='이해했어요 ✓'; }
+  var m=document.getElementById('hsGotMsg'); if(m) m.style.display='none';
+  document.querySelectorAll('#sc-haeseol .hs-tab').forEach(function(t,idx){t.classList.toggle('active', idx===0);});
+  document.querySelectorAll('#sc-haeseol .hs-panel').forEach(function(p){p.classList.toggle('show', p.getAttribute('data-hs')==='0');});
+}
+
+/* ---------- report ---------- */
+function countUp(el,from,to,dur){
+  if(reduce){ el.textContent=to; return; }
+  var st=null;
+  function step(ts){ if(!st)st=ts; var p=Math.min(1,(ts-st)/dur); el.textContent=Math.round(from+(to-from)*p); if(p<1) requestAnimationFrame(step); }
+  requestAnimationFrame(step);
+}
+function animateReport(){
+  var sc=document.getElementById('repScoreNum'); if(sc) countUp(sc,0,73,950);
+  document.querySelectorAll('#sc-report .fill').forEach(function(f){ var w=f.getAttribute('data-w')||'0%'; f.style.width='0%'; setTimeout(function(){ f.style.width=w; },150); });
+  var xg=document.getElementById('repXpNum'); if(xg) countUp(xg,0,30,900);
+  if(!reduce) setTimeout(function(){ fireConfetti(window.innerWidth/2, window.innerHeight*0.30, 90); },420);
+}
+</script>
+</body>
+</html>
