@@ -1,29 +1,435 @@
-<!doctype html>
-<html lang="ko">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>작문 데모 · Stream Learning</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Examrizz — Condition-Based Writing · Korea demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,600;0,700;0,800;0,900&display=swap" rel="stylesheet">
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;
-    background:#0E1116;color:#F6F4EF;font-family:'Hanken Grotesk','Apple SD Gothic Neo','Noto Sans KR',sans-serif;padding:32px}
-  .eyebrow{font-size:14px;letter-spacing:.3em;text-transform:uppercase;color:#9FB0FF;font-weight:700;margin-bottom:20px}
-  h1{font-family:'Spectral',serif;font-weight:600;font-size:44px;line-height:1.15;letter-spacing:-.015em;margin-bottom:20px}
-  p{font-size:18px;line-height:1.6;color:#C9C7C0;max-width:520px;margin:0 auto}
-  a{display:inline-flex;align-items:center;gap:10px;margin-top:36px;padding:14px 26px;background:#3D5BFF;color:#fff;
-    border-radius:14px;text-decoration:none;font-weight:700;font-size:17px}
+  :root{
+    --green:#58cc02; --green-dark:#46a302; --green-bg:#d7ffb8; --green-text:#4b8a00;
+    --red:#ff4b4b; --red-dark:#e63a3a; --red-bg:#ffeaea; --red-text:#d62b2b;
+    --blue:#1cb0f6; --blue-bg:#ddf4ff; --blue-border:#84d8ff;
+    --ink:#3c3c3c; --muted:#9a9a9a; --line:#e5e5e5; --bg:#fff;
+    --violet:#8b5cf6; --violet-bg:#f4efff; --violet-line:#e3d6ff; --violet-text:#6d3fd1;
+    --amber-bg:#fff7e6; --amber-line:#ffe0a3; --amber-text:#8a6d1f;
+    --font:'Nunito', ui-rounded, "Helvetica Neue", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{font-family:var(--font);color:var(--ink);background:#eef1f4;
+       display:flex;align-items:center;justify-content:center;padding:16px;}
+  .phone{width:100%;max-width:480px;height:min(880px,97vh);display:flex;flex-direction:column;
+         border:1px solid #dfe3e8;border-radius:30px;overflow:hidden;background:#fff;
+         box-shadow:0 30px 70px rgba(20,30,50,.16);position:relative;}
+
+  /* top bar */
+  .topbar{display:flex;align-items:center;gap:12px;padding:16px 18px 10px;border-bottom:1px solid #f0f0f0;}
+  .brand{font-weight:900;font-size:14px;letter-spacing:.01em;color:var(--ink);white-space:nowrap;}
+  .brand .sub{color:var(--muted);font-weight:800;font-size:11px;display:block;letter-spacing:.04em;}
+  .steps{display:flex;gap:6px;margin-left:auto;}
+  .dot{width:9px;height:9px;border-radius:99px;background:var(--line);transition:.2s;}
+  .dot.on{background:var(--violet);}
+  .dot.done{background:var(--green);}
+
+  /* body */
+  .stage{flex:1;overflow-y:auto;padding:18px 20px 8px;}
+  .screen{animation:fade .28s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+
+  /* condition card — the AUTHOR layer (expert-facing) */
+  .cond{background:var(--violet-bg);border:1.5px solid var(--violet-line);border-radius:16px;padding:14px 15px;margin-bottom:18px;}
+  .cond .eyebrow{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--violet);margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .cond .eyebrow .pill{background:#fff;border:1.5px solid var(--violet-line);border-radius:6px;padding:2px 7px;color:var(--violet-text);letter-spacing:.04em;}
+  .cond .ctype{font-size:16px;font-weight:900;color:var(--violet-text);line-height:1.2;margin-bottom:6px;}
+  .cond .cnote{font-size:13px;font-weight:600;line-height:1.45;color:#5b4a82;}
+  .cond .exam{margin-top:9px;padding-top:9px;border-top:1px dashed var(--violet-line);font-size:12px;font-weight:800;color:var(--violet-text);}
+  .cond .exam span{font-weight:700;color:#7a6aa0;}
+
+  .seen{font-size:10.5px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+
+  /* prompt + Korean source */
+  .prompt{font-size:19px;font-weight:900;line-height:1.3;margin-bottom:12px;}
+  .ko{background:var(--amber-bg);border:1.5px solid var(--amber-line);border-radius:13px;padding:13px 14px;
+      font-size:18px;font-weight:800;color:#6b5410;margin-bottom:14px;line-height:1.4;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px;}
+  .chip{background:var(--blue-bg);border:1.5px solid #cfe8ff;color:#1187cf;font-weight:800;font-size:12px;padding:5px 10px;border-radius:9px;}
+
+  /* MCQ options */
+  .opt{display:flex;align-items:flex-start;gap:12px;border:2px solid var(--line);border-bottom-width:4px;border-radius:15px;
+       padding:14px 15px;margin-bottom:11px;cursor:pointer;font-size:16px;font-weight:700;line-height:1.35;background:#fff;transition:.08s;}
+  .opt:hover{background:#fafafa;}
+  .opt.sel{border-color:var(--blue-border);background:var(--blue-bg);color:#1187cf;}
+  .opt.right{border-color:var(--green);background:var(--green-bg);color:var(--green-text);}
+  .opt.wrong{border-color:var(--red);background:var(--red-bg);color:var(--red-text);}
+  .opt .key{width:24px;height:24px;flex:none;border:2px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:900;color:var(--muted);}
+  .opt.sel .key{border-color:var(--blue-border);color:#1187cf;}
+
+  /* build-from-bank */
+  .answer-line{min-height:58px;border-bottom:2px dashed var(--line);display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start;padding:8px 2px;margin-bottom:20px;}
+  .answer-line.empty::before{content:"여기에 단어를 놓으세요";color:var(--muted);font-weight:700;font-size:14px;align-self:center;}
+  .bank{display:flex;flex-wrap:wrap;gap:9px;}
+  .word{border:2px solid var(--line);border-bottom-width:4px;border-radius:13px;padding:9px 13px;font-weight:800;font-size:16px;cursor:pointer;background:#fff;transition:.08s;}
+  .word:hover{background:#fafafa;}
+  .word.used{visibility:hidden;}
+
+  /* text input */
+  textarea{width:100%;min-height:88px;border:2px solid var(--line);border-radius:14px;padding:13px;font-family:var(--font);font-size:16px;font-weight:700;resize:none;outline:none;line-height:1.4;}
+  textarea:focus{border-color:var(--blue-border);}
+  .meta{display:flex;justify-content:space-between;margin-top:8px;font-weight:800;font-size:12.5px;color:var(--muted);gap:10px;}
+
+  /* footer / feedback */
+  .footer{border-top:1.5px solid #f0f0f0;padding:14px 20px 20px;transition:.18s;}
+  .footer.correct{background:var(--green-bg);border-color:transparent;}
+  .footer.incorrect{background:var(--red-bg);border-color:transparent;}
+  .fb{display:flex;align-items:flex-start;gap:11px;margin-bottom:13px;}
+  .fb-ico{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-size:19px;font-weight:900;color:#fff;margin-top:1px;}
+  .correct .fb-ico{background:var(--green);} .incorrect .fb-ico{background:var(--red);}
+  .fb-title{font-weight:900;font-size:16px;margin-bottom:3px;} .correct .fb-title{color:var(--green-text);} .incorrect .fb-title{color:var(--red-text);}
+  .fb-body{font-size:13.5px;font-weight:700;line-height:1.5;} .correct .fb-body{color:#3f7000;} .incorrect .fb-body{color:#a8312b;}
+  .fb-body em{font-style:normal;font-weight:900;background:rgba(255,255,255,.55);padding:0 4px;border-radius:5px;}
+  .btnrow{display:flex;gap:10px;}
+  .btn{flex:1;border:none;border-radius:15px;padding:15px;font-family:var(--font);font-weight:900;font-size:16px;letter-spacing:.03em;text-transform:uppercase;cursor:pointer;color:#fff;background:var(--green);box-shadow:0 4px 0 var(--green-dark);transition:.05s;}
+  .btn:active{transform:translateY(2px);box-shadow:0 2px 0 var(--green-dark);}
+  .btn:disabled{background:#e5e5e5;color:#b0b0b0;box-shadow:0 4px 0 #d0d0d0;cursor:not-allowed;}
+  .btn.ghost{background:#fff;color:var(--muted);box-shadow:0 4px 0 var(--line);border:2px solid var(--line);flex:0 0 auto;padding:15px 18px;}
+  .btn.red{background:var(--red);box-shadow:0 4px 0 var(--red-dark);}
+
+  /* intro / outro panels */
+  .panel{padding:30px 26px;display:flex;flex-direction:column;height:100%;justify-content:center;animation:fade .3s ease;}
+  .panel h1{font-size:27px;font-weight:900;line-height:1.18;margin-bottom:14px;}
+  .panel h1 .hl{color:var(--violet-text);}
+  .panel p{font-size:15px;font-weight:700;line-height:1.55;color:#5a5a5a;margin-bottom:14px;}
+  .legend{display:flex;flex-direction:column;gap:10px;margin:6px 0 22px;}
+  .leg{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;font-weight:700;line-height:1.4;}
+  .leg b{font-weight:900;color:var(--ink);}
+  .swatch{width:14px;height:14px;border-radius:5px;flex:none;margin-top:2px;}
+  .three{display:flex;flex-direction:column;gap:11px;margin:4px 0 22px;}
+  .three .row{border:1.5px solid var(--line);border-radius:13px;padding:12px 13px;}
+  .three .row .h{font-weight:900;font-size:14px;margin-bottom:3px;}
+  .three .row .h .tag{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:var(--violet);background:var(--violet-bg);border:1px solid var(--violet-line);border-radius:6px;padding:2px 6px;margin-left:6px;vertical-align:1px;}
+  .three .row .d{font-size:12.5px;font-weight:700;color:#6a6a6a;line-height:1.45;}
+  .footnote{font-size:12px;font-weight:700;color:var(--muted);line-height:1.5;border-top:1px solid #f0f0f0;padding-top:14px;}
 </style>
 </head>
 <body>
-  <div>
-    <div class="eyebrow">03 · 작문</div>
-    <h1>작문 데모</h1>
-    <p>이 페이지의 콘텐츠는 곧 추가됩니다. 작문 데모 자료가 준비되면 이 위치에 게시됩니다.</p>
-    <a href="/">← 프레젠테이션으로 돌아가기</a>
+<div class="phone">
+  <div class="topbar">
+    <div class="brand">Examrizz <span class="sub">스트림 러닝 · 조건 기반 쓰기</span></div>
+    <div class="steps" id="steps"></div>
   </div>
+  <div class="stage" id="stage"></div>
+  <div class="footer" id="footer">
+    <div class="fb" id="fb" style="display:none">
+      <div class="fb-ico" id="fbico"></div>
+      <div><div class="fb-title" id="fbtitle"></div><div class="fb-body" id="fbbody"></div></div>
+    </div>
+    <div class="btnrow" id="btnrow"></div>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   Examrizz — Condition-Based Writing · Korea exemplar demo
+   One engine, four conditions. Every task = the learner writing to a
+   condition. Vary the condition's shape -> exam practice, free production,
+   improvement. All four graded deterministically (no LLM), instantly.
+
+   Two registers, on purpose:
+     - the VIOLET "condition card" is the author/expert layer (what is set)
+     - the task + feedback is the learner layer, in Boo's warm voice
+       (no grammar-class labels — function/sense language only)
+   ========================================================================= */
+
+const $=id=>document.getElementById(id);
+const norm=s=>(s||"").trim().toLowerCase().replace(/\s+/g," ");
+const words=t=>norm(t).split(/[^a-z0-9'\-]+/).filter(Boolean);
+const wc=t=>words(t).length;
+const hasWordStart=(t,terms)=>{const ws=words(t);return (terms||[]).some(x=>ws.some(w=>w.startsWith(norm(x))));};
+const hasAllStart=(t,terms)=>{const ws=words(t);return (terms||[]).every(x=>ws.some(w=>w.startsWith(norm(x))));};
+const hasWholeWord=(t,cues)=>{const ws=words(t);return (cues||[]).some(c=>ws.includes(norm(c)));};
+const hasPhrase=(t,ph)=>{const x=norm(t);return (ph||[]).find(p=>x.includes(norm(p)))||null;};
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------------------------------------------------------------------- */
+/* THE FOUR CASES                                                          */
+/* ---------------------------------------------------------------------- */
+const CASES=[
+
+/* CASE 1 — Elementary · compliance, fully scaffolded · build-from-bank ---- */
+{
+  level:"Elementary", tpl:"P1 · build", fundamental:"Exam",
+  ctype:"Compliance condition — given words + count",
+  cnote:"Maximum scaffold: the meaning is given, and so are the word tiles. The condition itself does the teaching — two tiles don't belong (plays, the) and must be left out to satisfy it.",
+  examTitle:"조건 영작", examNote:"주어진 단어 활용 + 단어 수 제한",
+  prompt:"다음 우리말을 영어로 쓰세요.",
+  ko:"우리는 방과 후에 축구를 한다.",
+  chips:["주어진 단어 활용","5단어","마침표 포함"],
+  tiles:["We","play","plays","soccer","after","school","the","."],
+  grade(ans){ return norm(ans.join(" "))==="we play soccer after school ."; },
+  feedback(ans,ok){
+    if(ok) return {t:"Nice!", b:"Five words, in order, and the simple form <em>play</em> to go with <em>we</em>. Every part of the condition met — <em>We play soccer after school.</em>"};
+    const has=w=>ans.map(norm).includes(w);
+    if(has("plays")) return {t:"Not quite", b:"You used <em>plays</em>, but <em>we</em> takes the plain form <em>play</em>. Save <em>plays</em> for just one other person — <em>he plays, she plays</em>. Here it's <em>We play soccer after school.</em>"};
+    if(has("the")) return {t:"Not quite", b:"<em>after school</em> goes together on its own — it doesn't take <em>the</em> in front. Leave it out: <em>We play soccer after school.</em>"};
+    if(!has("after")||!has("school")) return {t:"Not quite", b:"The <em>when</em> is missing. We need <em>after school</em> at the end to match the Korean. Try <em>We play soccer after school.</em>"};
+    return {t:"Almost — check the order", b:"All the right words are here. English lines them up as <em>who · does what · when</em>: <em>We play soccer after school.</em>"};
+  }
+},
+
+/* CASE 2 — Middle · compliance, no gloss · guided write -------------------- */
+{
+  level:"Middle School", tpl:"P3 · guided", fundamental:"Exam",
+  ctype:"Compliance condition — required word + length",
+  cnote:"The scaffold drops: no tiles, no model. The learner produces from scratch, but still against hard conditions an answer key can check — a required word, a word cap, and the topic. This is the core 조건 영작 surface.",
+  examTitle:"조건 영작", examNote:"제시어 사용 + 단어 수 + 주제 일치",
+  prompt:"주제: 환경 보호 (protecting the environment)",
+  ko:"조건에 맞게 한 문장으로 영작하세요.",
+  chips:["제시어 'reduce' 사용","8단어 이내","환경에 관한 내용"],
+  topic:["waste","plastic","pollution","energy","environment","water","carbon","emission","trash","litter","power","electricity","resource"],
+  input:true, placeholder:"Write one sentence using 'reduce'…",
+  grade(ans){
+    const n=wc(ans);
+    if(n<3||n>8) return false;
+    if(!hasWordStart(ans,["reduce"])) return false;
+    if(!hasWordStart(ans,this.topic)) return false;
+    return true;
+  },
+  feedback(ans,ok){
+    if(ok) return {t:"Correct!", b:"<em>reduce</em> is in, you're under the word limit, and it's clearly about the environment. Every condition satisfied."};
+    const n=wc(ans);
+    if(!hasWordStart(ans,["reduce"])) return {t:"Missing a condition", b:"The condition asks you to use the word <em>reduce</em>. Build it in — e.g. <em>We should reduce plastic waste.</em>"};
+    if(n>8) return {t:"Over the limit", b:`That's ${n} words. The condition is 8 or fewer, so trim it to the core idea — e.g. <em>We should reduce plastic waste.</em>`};
+    if(n<3) return {t:"A little short", b:"Give it a subject and a full thought — e.g. <em>We should reduce plastic waste.</em>"};
+    if(!hasWordStart(ans,this.topic)) return {t:"Off the topic", b:"Bring it back to the environment — that's the set topic. e.g. <em>We should reduce plastic waste.</em> or <em>Factories must reduce air pollution.</em>"};
+    return {t:"Not quite", b:"Check each condition: use <em>reduce</em>, stay under 8 words, keep it about the environment."};
+  }
+},
+
+/* CASE 3 — High · QUALITY condition · guided write ------------------------- */
+{
+  level:"High School", tpl:"P3 · guided", fundamental:"Production",
+  ctype:"Quality condition — a clear, arguable position",
+  cnote:"Same shape, different kind of condition. Here the rule is about the writing itself: take a position someone could argue with. A grammatically perfect sentence still fails if it commits to nothing — this is where 'correct English' and 'good writing' separate.",
+  examTitle:"서술형 · 주제문 쓰기", examNote:"분명하고 논쟁 가능한 입장",
+  prompt:"주제: 교복 (school uniforms)",
+  ko:"교복에 대한 주제문(thesis)을 쓰세요.",
+  chips:["분명한 입장","논쟁 가능할 것","빈말 금지","8–15단어"],
+  topic:["uniform"],
+  vague:["something that","a thing","things","in many ways","in different ways","many different","can be good","can be bad","is good","is bad","is important","affects many","matters a lot","lots of ways","kind of","sort of","various ways"],
+  pos:["should","must","ought","reduce","limit","improve","harm","benefit","need","require","prevent","build","save","help","make","let","give","cost","cause","stop","force"],
+  input:true, placeholder:"Write your thesis on school uniforms…",
+  grade(ans){
+    const n=wc(ans);
+    if(n<8||n>15) return false;
+    if(!hasWordStart(ans,this.topic)) return false;
+    if(!hasWholeWord(ans,this.pos)) return false;
+    if(hasPhrase(ans,this.vague)) return false;
+    return true;
+  },
+  feedback(ans,ok){
+    if(ok) return {t:"Exactly!", b:"That's a claim someone could push back on — which is precisely what makes it worth writing a paragraph about. Clear, arguable, on topic."};
+    const n=wc(ans);
+    const v=hasPhrase(ans,this.vague);
+    if(v) return {t:"True — but not arguable", b:`Your sentence is fine English, but <em>${esc(v)}</em> is the kind of thing no one would disagree with, so there's nothing to prove and nowhere for the paragraph to go. A thesis has to take a side. Try a real claim: <em>School uniforms reduce peer pressure but limit self-expression.</em>`};
+    if(!hasWordStart(ans,this.topic)) return {t:"Off the topic", b:"The topic is school uniforms — name them, then take a side. e.g. <em>School uniforms reduce daily distractions in class.</em>"};
+    if(!hasWholeWord(ans,this.pos)) return {t:"Take a side", b:"This describes uniforms but doesn't say what they <em>do</em> or whether they're worth it. Commit: <em>School uniforms reduce peer pressure but limit self-expression.</em>"};
+    if(n<8) return {t:"Build it out", b:"A thesis needs room to make a real point — aim for 8–15 words. e.g. <em>School uniforms reduce peer pressure but limit self-expression.</em>"};
+    if(n>15) return {t:"Tighten it", b:`That's ${n} words. Keep the claim, cut the rest — a thesis is sharp. e.g. <em>School uniforms reduce peer pressure but limit self-expression.</em>`};
+    return {t:"Not quite", b:"Name the topic, take an arguable side, and keep it to 8–15 tight words."};
+  }
+},
+
+/* CASE 4 — High · IMPROVEMENT condition · pick-the-better ------------------ */
+{
+  level:"High School", tpl:"R6 · judge", fundamental:"Improvement",
+  ctype:"Improvement condition — judge the stronger version",
+  cnote:"The condition is applied to writing that already exists: which version meets the bar? Recognising why one is stronger is the step before producing it — the 'judge' move that the whole see → judge → do arc is built on.",
+  examTitle:"서술형 대비 · 주제문 판단", examNote:"더 강한 주제문 고르기",
+  prompt:"Which is the stronger thesis — the one that takes a clear, arguable position?",
+  ko:"주제: 소셜 미디어 (social media)",
+  options:[
+    "Social media is something that affects many people in different ways.",
+    "Social media does more harm than good and should be limited."
+  ],
+  answer:1,
+  feedback(ans,ok){
+    if(ok) return {t:"Strong choice", b:"<em>More harm than good</em> takes a side, and <em>should be limited</em> commits to what follows from it. Someone could agree or argue — so there's a real point to defend. That's a thesis you can build a paragraph on."};
+    return {t:"Look again", b:"Option A is smooth English, and it's true — which is the problem. <em>Affects many people in different ways</em> is something nobody would argue with, so there's nothing to prove and nowhere to go. A thesis has to be contestable. B — <em>does more harm than good and should be limited</em> — picks a side you could defend or attack. That's what makes it the stronger one."};
+  }
+}
+];
+
+/* ---------------------------------------------------------------------- */
+/* ENGINE                                                                  */
+/* ---------------------------------------------------------------------- */
+let idx=-1;            // -1 intro, 0..3 cases, 4 outro
+let phase="answer";    // answer | checked
+let answer=null;       // current raw answer
+let provided=false;
+
+function renderSteps(){
+  const s=$("steps"); s.innerHTML="";
+  CASES.forEach((_,i)=>{
+    const d=document.createElement("div");
+    d.className="dot"+(i<idx?" done":"")+(i===idx?" on":"");
+    s.appendChild(d);
+  });
+}
+
+function setBtns(html){ $("btnrow").innerHTML=html; }
+function hideFb(){ $("fb").style.display="none"; $("footer").className="footer"; }
+
+function render(){
+  phase="answer"; answer=null; provided=false; hideFb();
+  renderSteps();
+  if(idx===-1) return renderIntro();
+  if(idx>=CASES.length) return renderOutro();
+  renderCase(CASES[idx]);
+}
+
+function renderIntro(){
+  $("stage").innerHTML=`
+    <div class="panel">
+      <h1>Four conditions,<br><span class="hl">one engine.</span></h1>
+      <p>Every task is the same move: the learner writes <b>to a condition</b>. Change the <i>shape</i> of the condition and the same engine produces exam practice, free production, and improvement work.</p>
+      <div class="legend">
+        <div class="leg"><span class="swatch" style="background:var(--violet)"></span><div><b>The condition card</b> (violet) is what the author sets — the expert layer.</div></div>
+        <div class="leg"><span class="swatch" style="background:var(--green)"></span><div><b>The task &amp; feedback</b> is what the learner sees — warm, jargon-free, no grammar labels.</div></div>
+      </div>
+      <p style="font-size:13.5px;color:var(--muted)">Four exemplars: one elementary, three middle/high. Try each — and answer wrongly on purpose to see the explanatory feedback. All four are graded with no AI, instantly.</p>
+    </div>`;
+  setBtns(`<button class="btn" onclick="go(0)">Start the four cases →</button>`);
+}
+
+function renderOutro(){
+  $("stage").innerHTML=`
+    <div class="panel">
+      <h1>One frame,<br><span class="hl">three outcomes.</span></h1>
+      <div class="three">
+        <div class="row"><div class="h">Exam success <span class="tag">compliance</span></div><div class="d">Write along a spine of given-word, length, and structure conditions — the 조건 영작 / 서술형 surface, exactly.</div></div>
+        <div class="row"><div class="h">Production <span class="tag">quality</span></div><div class="d">Loosen to a quality bar — take a clear, arguable position — and the same engine teaches free composition.</div></div>
+        <div class="row"><div class="h">Improvement <span class="tag">judge → fix</span></div><div class="d">Point the condition at existing text: judge the stronger version, then rewrite to meet it.</div></div>
+      </div>
+      <p class="footnote">Every screen here was graded deterministically — no model call, no latency, consistent at scale. The condition is the surface; the universal skill spine underneath is unchanged. Sell conditions; deliver craft.</p>
+    </div>`;
+  setBtns(`<button class="btn ghost" onclick="go(-1)">↺ Replay</button><button class="btn" onclick="go(0)">Back to case 1</button>`);
+}
+
+function renderCase(c){
+  const condCard=`
+    <div class="cond">
+      <div class="eyebrow"><span class="pill">CASE ${idx+1}</span> ${esc(c.level)} <span class="pill">${esc(c.tpl)}</span></div>
+      <div class="ctype">${esc(c.ctype)}</div>
+      <div class="cnote">${esc(c.cnote)}</div>
+      <div class="exam">${esc(c.examTitle)} &nbsp;·&nbsp; <span>${esc(c.examNote)}</span></div>
+    </div>`;
+
+  let taskHtml="";
+  if(c.tiles){ // build-from-bank
+    taskHtml=`<div class="prompt">${esc(c.prompt)}</div>
+      <div class="ko">${esc(c.ko)}</div>
+      <div class="chips">${c.chips.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>
+      <div class="answer-line empty" id="line"></div>
+      <div class="bank" id="bank"></div>`;
+  } else if(c.input){ // guided write
+    taskHtml=`<div class="prompt">${esc(c.prompt)}</div>
+      <div class="ko">${esc(c.ko)}</div>
+      <div class="chips">${c.chips.map(x=>`<span class="chip">${esc(x)}</span>`).join("")}</div>
+      <textarea id="ta" placeholder="${esc(c.placeholder||'')}"></textarea>
+      <div class="meta"><span id="wct">0 words</span><span>${esc(c.chips[c.chips.length-1]||'')}</span></div>`;
+  } else { // mcq / pick-the-better
+    taskHtml=`<div class="ko">${esc(c.ko)}</div>
+      <div class="prompt">${esc(c.prompt)}</div>
+      <div id="opts"></div>`;
+  }
+
+  $("stage").innerHTML=`<div class="screen"><div class="seen">▾ What the learner sees</div>${taskHtml}</div>`;
+  // condition card sits above the learner view:
+  $("stage").firstChild.insertAdjacentHTML("afterbegin", condCard);
+
+  if(c.tiles) wireBuild(c);
+  else if(c.input) wireInput(c);
+  else wireMcq(c);
+
+  setBtns(`<button class="btn" id="check" onclick="check()" disabled>Check</button>`);
+}
+
+/* ---- wiring per task type ---- */
+function wireBuild(c){
+  const tiles=shuffle(c.tiles.map((t,i)=>({t,i})));
+  const chosen=[];
+  const line=$("line"), bank=$("bank");
+  function paint(){
+    line.innerHTML="";
+    line.classList.toggle("empty",chosen.length===0);
+    chosen.forEach((ci,pos)=>{
+      const w=document.createElement("div");w.className="word";w.textContent=tiles[ci].t;
+      w.onclick=()=>{ if(phase!=="answer")return; chosen.splice(pos,1); paint(); };
+      line.appendChild(w);
+    });
+    [...bank.children].forEach((w,i)=>w.classList.toggle("used",chosen.includes(i)));
+    setProvided(chosen.length>0);
+    answer=chosen.map(ci=>tiles[ci].t);
+  }
+  tiles.forEach((tile,i)=>{
+    const w=document.createElement("div");w.className="word";w.textContent=tile.t;
+    w.onclick=()=>{ if(phase!=="answer"||chosen.includes(i))return; chosen.push(i); paint(); };
+    bank.appendChild(w);
+  });
+}
+function wireInput(c){
+  const ta=$("ta");
+  ta.oninput=()=>{ $("wct").textContent=wc(ta.value)+" words"; answer=ta.value; setProvided(wc(ta.value)>0); };
+  ta.focus();
+}
+function wireMcq(c){
+  const box=$("opts"); let pick=null;
+  c.options.forEach((o,i)=>{
+    const el=document.createElement("div");el.className="opt";
+    el.innerHTML=`<span class="key">${"AB"[i]||i+1}</span><span>${esc(o)}</span>`;
+    el.onclick=()=>{ if(phase!=="answer")return;
+      box.querySelectorAll(".opt").forEach(x=>x.classList.remove("sel"));
+      el.classList.add("sel"); pick=i; answer=i; setProvided(true); };
+    box.appendChild(el);
+  });
+}
+function setProvided(on){ provided=on; const b=$("check"); if(b&&phase==="answer") b.disabled=!on; }
+const shuffle=a=>a.map(v=>[Math.random(),v]).sort((x,y)=>x[0]-y[0]).map(v=>v[1]);
+
+/* ---- check / reveal ---- */
+function check(){
+  const c=CASES[idx];
+  const ok=c.grade ? c.grade(answer) : (answer===c.answer);
+  phase="checked";
+
+  // reveal for mcq
+  if(c.options){
+    const opts=$("opts").querySelectorAll(".opt");
+    if(opts[c.answer]) opts[c.answer].classList.add("right");
+    if(!ok&&answer!=null&&answer!==c.answer&&opts[answer]) opts[answer].classList.add("wrong");
+  }
+
+  const fb=c.feedback(answer,ok);
+  $("footer").className="footer "+(ok?"correct":"incorrect");
+  $("fb").style.display="flex";
+  $("fbico").textContent=ok?"✓":"✕";
+  $("fbtitle").textContent=fb.t;
+  $("fbbody").innerHTML=fb.b;
+
+  const last=idx===CASES.length-1;
+  setBtns(
+    `<button class="btn ghost" onclick="render()">↺ Try again</button>`+
+    `<button class="btn${ok?'':' red'}" onclick="go(${idx+1})">${last?'See the model →':'Next case →'}</button>`
+  );
+}
+
+function go(n){ idx=n; render(); }
+
+/* boot */
+render();
+</script>
 </body>
 </html>
